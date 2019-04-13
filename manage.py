@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import Aquarius.Okari as Okari
+import Maid.Okari as Okari
 import os
 
 bot = commands.Bot(command_prefix='!')
@@ -57,5 +57,5 @@ async def on_message(message):
         file=discord.File(AddMember(message.author),filename="Newmember.png")
         await message.channel.send(file=file)
 '''
-bot.run(open('AccessToken','r').read())
+bot.run(open('Maid/AccessToken','r').read())
 

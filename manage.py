@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-from Aquarius.Okari import AddMember
+import Aquarius.Okari as Okari
+import os
 
-bot = commands.Bot(command_prefix='!@')
+bot = commands.Bot(command_prefix='!')
 
 
 @bot.event
@@ -13,18 +14,41 @@ async def on_ready():
     print('------')
 
 #BotCommands
-@bot.command()
+@bot.command(name="@addmem")
 async def addmem(ctx):
-    file=discord.File(AddMember(ctx.author),filename="Newmember.png")
+    path=Okari.AddMember(ctx.author)
+    file=discord.File(path,filename="Newmember.png")
     await ctx.send(file=file)
+    os.remove(path)
 
+@bot.command(name="@lostmem")
+async def lostmem(ctx):
+    path=Okari.LostMember(ctx.author)
+    file=discord.File(path,filename="LostMem.png")
+    await ctx.send(file=file)
+    os.remove(path)
 
+@bot.command(name="@returnmem")
+async def returnmem(ctx):
+    path=Okari.ReturnMember(ctx.author)
+    file=discord.File(path,filename="ReturnMem.png")
+    await ctx.send(file=file)
+    os.remove(path)
 
 #MemberEvents
 @bot.event
 async def on_member_join(mem):
-    file=discord.File(AddMember(mem.author),filename="Newmember.png")
-    await bot.get_channel(566000934493224962).send(file=file)
+    path=Okari.AddMember(mem)
+    file=discord.File(path,filename="Newmember.png")
+    await mem.guild.get_channel(566000934493224962).send(file=file)
+    os.remove(path)
+
+@bot.event
+async def on_member_remove(mem):
+    path=Okari.LostMember(mem)
+    file=discord.File(path,filename="Newmember.png")
+    await mem.guild.get_channel(566000934493224962).send(file=file)
+    os.remove(path)
 
 '''
 @bot.event

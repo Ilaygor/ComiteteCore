@@ -1,5 +1,6 @@
-from discord import File
+from discord import File,Member
 from discord.ext import commands
+from discord.ext.commands import MemberConverter
 import Okari
 import Memes_name_subject_to_change as mem
 import os
@@ -16,23 +17,20 @@ async def on_ready():
 
 #BotCommands
 @bot.command(name="@addmem")
-async def addmem(ctx):
-    path=Okari.AddMember(ctx.author)
-    file=File(path,filename="Newmember.png")
+async def addmem(ctx,*args):
+    if args:
+        author=await MemberConverter().convert(ctx,args[0])
+    else:
+        author=ctx.author
+    path=Okari.AddMember(author)
+    file=File(path,filename="Member.png")
     await ctx.send(file=file)
-    os.remove(path)
+    os.remove(path)    
 
 @bot.command(name="@lostmem")
 async def lostmem(ctx):
     path=Okari.LostMember(ctx.author)
     file=File(path,filename="LostMem.png")
-    await ctx.send(file=file)
-    os.remove(path)
-
-@bot.command(name="@returnmem")
-async def returnmem(ctx):
-    path=Okari.ReturnMember()
-    file=File(path,filename="ReturnMem.png")
     await ctx.send(file=file)
     os.remove(path)
 

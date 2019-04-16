@@ -1,18 +1,24 @@
 from PIL import Image
 from PIL import ImageDraw
 import os
+import Masta
 
 def AddMember(member):
-    CreateFirstWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
+    if not Masta.CheckMember(member.id):
+        try:
+            Masta.AddNewLabmem(member.id)
+        except:
+            pass
+        CreateFirstWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
+    else:
+        CreatWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
+
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
 def LostMember(member):
     CreateLostMessage(member.avatar_url_as(size=128),member.name,member.top_role.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
-def ReturnMember(member):
-    CreatWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
-    return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
 
 

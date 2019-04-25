@@ -5,7 +5,7 @@ import Okari
 import Memes_name_subject_to_change as mem
 import os
 
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='!', description='Сomitete System')
 
 
 @bot.event

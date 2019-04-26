@@ -17,9 +17,6 @@ def LostMember(member):
     Masta.DeactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
-
-
-
 def CreatWelcomeMessage(memberAvatar,name):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
     base = Image.open('Maid/src/Images/LabmemberReturn.png')
@@ -42,8 +39,6 @@ def CreateLostMessage(memberAvatar,name,role):
     AddText(name,(160, 65),base)
     AddText(role,(160, 110),base,size=18)
     return base
-
-
 
 def AddText(text,position,img,color=(255,255,255),size=22):
     from PIL import ImageFont

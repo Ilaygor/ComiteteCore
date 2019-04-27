@@ -5,7 +5,7 @@ import Okari, ExpSys
 import Memes_name_subject_to_change as mem
 import os
 
-bot = commands.Bot(command_prefix='!', description='Сomitete System')
+bot = commands.Bot(command_prefix='NM!', description='Сomitete System')
 
 async def is_owner(ctx):
     return ctx.author.id == 269860812355665921
@@ -53,6 +53,11 @@ async def addmem(ctx,*args):
     file=File(path,filename="Member.png")
     await ctx.send(file=file)
     os.remove(path)  
+
+@bot.command(name="@levelup")
+@commands.check(is_owner)
+async def levelup(ctx,level):
+    await ExpSys.levelUp(ctx.channel,ctx.author.id,int(level))
 
 @bot.command(name="@addexp")
 @commands.check(is_owner)

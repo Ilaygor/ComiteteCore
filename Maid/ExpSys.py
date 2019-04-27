@@ -1,5 +1,9 @@
 import sqlite3
 import discord
+from discord import File
+import Okari
+import os
+
 conn = sqlite3.connect("AquariusDB.db")
 
 UsersData={}
@@ -16,7 +20,14 @@ def init():
     return 'done'
 
 async def levelUp(channel,id,level):
-    await channel.send("Пользователь <@"+str(id)+"> достиг "+str(level)+" уровня!")
+    mem=channel.guild.get_member(id)
+    path="Maid/src/Images/Temp/"+str(id)+".png"
+
+    Okari.CreateLevelUpMessage(mem.avatar_url_as(size=128),mem.name,str(level)).save(path, format="png")
+    
+    file=File(path,filename="LevelUp.png")
+    await channel.send(file=file)
+    os.remove(path) 
 
 def AddMem(id):
     usr=conn.cursor().execute("SELECT xp,MaxXP,level FROM LabMems WHERE DiscordID=?",[id]).fetchone()

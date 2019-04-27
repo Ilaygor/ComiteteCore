@@ -31,6 +31,22 @@ def CreateFirstWelcomeMessage(memberAvatar,name):
     AddText(name,(160, 80),base)
     return base
 
+def CreateLevelUpMessage(memberAvatar,name,level:str):
+    Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
+    base = Image.open('Maid/src/Images/LabmemberLevelUP.png')
+    #ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
+    base.paste(Avatar,(12,11))
+    AddText(name,(160, 85),base)
+    if len(level)==1:
+        lvl="00"+level
+    elif len(level)==2:
+        lvl="0"+level
+    else:
+        lvl=level
+    AddText(lvl,(415,30),base,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
+    return base
+
+
 def CreateLostMessage(memberAvatar,name,role):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
     ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(255,0,0,70))
@@ -40,9 +56,9 @@ def CreateLostMessage(memberAvatar,name,role):
     AddText(role,(160, 110),base,size=18)
     return base
 
-def AddText(text,position,img,color=(255,255,255),size=22):
+def AddText(text,position,img,color=(255,255,255),size=22,font='ariblk.ttf'):
     from PIL import ImageFont
-    Font = ImageFont.truetype("Maid/src/Fonts/ariblk.ttf", size)
+    Font = ImageFont.truetype("Maid/src/Fonts/"+font, size)
     ImageDraw.Draw(img).text(position,text,color,font=Font)
 
 def GetAvatarFromUrl(url):

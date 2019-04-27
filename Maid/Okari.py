@@ -5,22 +5,17 @@ import Masta
 
 def AddMember(member):
     if not Masta.CheckMember(member.id):
-        try:
-            Masta.AddNewLabmem(member.id)
-        except:
-            pass
+        Masta.AddNewLabmem(member.id)
         CreateFirstWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
     else:
         CreatWelcomeMessage(member.avatar_url_as(size=128),member.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
-
+        Masta.ReactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
 def LostMember(member):
     CreateLostMessage(member.avatar_url_as(size=128),member.name,member.top_role.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
+    Masta.DeactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
-
-
-
 
 def CreatWelcomeMessage(memberAvatar,name):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
@@ -44,8 +39,6 @@ def CreateLostMessage(memberAvatar,name,role):
     AddText(name,(160, 65),base)
     AddText(role,(160, 110),base,size=18)
     return base
-
-
 
 def AddText(text,position,img,color=(255,255,255),size=22):
     from PIL import ImageFont

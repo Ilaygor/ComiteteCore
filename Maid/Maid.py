@@ -1,6 +1,6 @@
 from discord import File,Member
 from discord.ext import commands
-from discord.ext.commands import MemberConverter
+from discord.ext.commands import MemberConverter,TextChannelConverter
 import Okari, ExpSys
 import Memes_name_subject_to_change as mem
 import os
@@ -30,6 +30,15 @@ async def integrate(ctx,*args):
         path=Okari.AddMember(i)
         os.remove(path)  
         ExpSys.AddMem(i.id)
+    await ctx.send("Done")
+
+@bot.command(name="@clear")
+@commands.check(is_owner)
+async def clear(ctx,chan,count):
+    channel=await TextChannelConverter().convert(ctx,chan)
+    async for i in channel.history(limit=int(count)):
+        if i.author.id==bot.user.id:
+            await i.delete()
     await ctx.send("Done")
 
 @bot.command(name="@addmem")

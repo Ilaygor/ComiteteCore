@@ -1,6 +1,6 @@
 from discord import File,Member
 from discord.ext import commands
-from discord.ext.commands import MemberConverter,TextChannelConverter
+from discord.ext.commands import MemberConverter
 import Okari, ExpSys
 import Memes_name_subject_to_change as mem
 import os
@@ -76,10 +76,11 @@ async def lostmem(ctx):
 
 #memes
 @bot.command(name="memes")
-async def memes(ctx,*args):
-    if os.path.exists('Maid/src/Images/memes/{}.json'.format(args[0])):
-        path=mem.CreateMem(args[0],' '.join(args[1:]))
-        file=File(path,filename=args[0]+".png")
+async def memes(ctx,memname,*args):
+    if os.path.exists('Maid/src/Images/memes/{}.json'.format(memname)):
+        text=' '.join(args)
+        path=mem.CreateMem(memname,text)
+        file=File(path,filename=memname+".png")
         await ctx.send(file=file)
         os.remove(path)
     else:

@@ -7,14 +7,15 @@ import os
 import random
 from Okari import AddText
 
-def CreateMem(memname,text):
+def CreateMem(memname,text:str):
     memdata=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())
     base = Image.open('Maid/src/Images/memes/'+memdata['filename'])
     linecount=0
-    for line in textwrap.wrap(text,width=memdata['placewidth']/(memdata['font-size']*0.5)):
+    width=int(memdata['placewidth']/(memdata['font-size']*0.5))
+    for line in textwrap.wrap(text,width=width):
         offset=linecount*memdata['font-size']
         if offset<memdata['placeheight']:
-            AddText(line,(memdata['x'], memdata['y']+offset),base,size=memdata['font-size'],color=ImageColor.getrgb(memdata['textcolor']))
+            AddText(('{:^'+str(width)+'}').format(line),(memdata['x'], memdata['y']+offset),base,size=memdata['font-size'],color=ImageColor.getrgb(memdata['textcolor']))
             linecount+=1
         else:
             break

@@ -7,6 +7,9 @@ def AddNewLabmem(id):
     cursor.execute("INSERT INTO labmems ('DiscordID')VALUES (?)",[id])
     conn.commit()
 
+def GetTopMembers(page):
+    users=10*page
+    return conn.cursor().execute("SELECT DiscordID,(Xp+MaxXP*Level) FROM LabMems Where IsActive='1' ORDER BY Level DESC,MaxXP DESC,Xp DESC LIMIT ?,?",[0+users,10+users])
 
 def CheckMember(id):
     cursor = conn.cursor()

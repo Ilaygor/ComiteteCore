@@ -17,6 +17,35 @@ def LostMember(member):
     Masta.DeactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
+def GetTop(members,page):
+    mems=[]
+
+    for mem in members:
+        template = Image.open('Maid/src/Images/Top.png')
+
+        Avatar = Image.open(GetAvatarFromUrl(mem['mem'].avatar_url_as(size=64)))
+        Avatar.thumbnail((64,64))
+        template.paste(Avatar,(80,9))
+        del Avatar
+
+        AddText(mem['mem'].name,(160, 15),template)
+        AddText(mem['data'],(160, 40),template,size=18)
+
+        position=(str(page)+str(len(mems)+1)).rjust(3,'0')
+        AddText(position,(6,29),template,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
+        
+        mems.append(template)
+
+    base=Image.new('RGBA',(template.width,template.height*10),color=(0,0,0,0))
+
+    for i in range(len(members)):
+        base.paste(mems[i],(0,0+template.height*i))
+    
+    path="Maid/src/Images/Temp/top"+str(page)+".png"
+    base.save(path)
+    return path
+    
+
 def CreatWelcomeMessage(memberAvatar,name):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
     base = Image.open('Maid/src/Images/LabmemberReturn.png')
@@ -37,13 +66,7 @@ def CreateLevelUpMessage(memberAvatar,name,level:str):
     #ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
     base.paste(Avatar,(12,11))
     AddText(name,(160, 85),base)
-    if len(level)==1:
-        lvl="00"+level
-    elif len(level)==2:
-        lvl="0"+level
-    else:
-        lvl=level
-    AddText(lvl,(415,30),base,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
+    AddText(level.rjust(3,'0'),(415,30),base,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
     return base
 
 

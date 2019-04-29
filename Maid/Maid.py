@@ -1,7 +1,7 @@
 from discord import File,Member
 from discord.ext import commands
 from discord.ext.commands import MemberConverter,TextChannelConverter
-import Okari, ExpSys
+import Okari, ExpSys,Masta
 import Memes_name_subject_to_change as mem
 import os
 
@@ -27,9 +27,10 @@ async def on_ready():
 @commands.check(is_owner)
 async def integrate(ctx,*args):
     for i in ctx.guild.members:
-        path=Okari.AddMember(i)
-        os.remove(path)  
-        ExpSys.AddMem(i.id)
+        if not i.bot:
+            path=Okari.AddMember(i)
+            os.remove(path)  
+            ExpSys.AddMem(i.id)
     await ctx.send("Done")
 
 @bot.command(name="@clear")
@@ -74,6 +75,23 @@ async def lostmem(ctx):
     await ctx.send(file=file)
     os.remove(path)
 
+@bot.command(name="top")
+async def top(ctx, page:int="1"):
+    members=[]
+    page=int(page)
+    for i in Masta.GetTopMembers(page-1):
+        members.append({
+            "mem":ctx.guild.get_member(i[0]),
+            "data":str(round(i[1],2))+" xp"
+        })
+    path=Okari.GetTop(members,page-1)
+    file=File(path,filename="LostMem.png")
+    await ctx.send(file=file)
+    os.remove(path)
+
+
+
+
 #memes
 @bot.command(name="memes")
 async def memes(ctx,memname,*args):
@@ -85,6 +103,7 @@ async def memes(ctx,memname,*args):
         os.remove(path)
     else:
         await ctx.send("Мем с именем {} не найден!".format(args[0]))
+
 
 #MemberEvents
 @bot.event
@@ -108,7 +127,7 @@ async def on_member_remove(mem):
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
-    if is_testserver(message):
+    if is_testserver(message )and not message.author.bot:
         await ExpSys.AddExp(message.author.id,len(message.content)/10,message.channel)
         
 bot.run(open('Maid/AccessToken','r').read())

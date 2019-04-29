@@ -1,6 +1,6 @@
 from discord import File,Member
 from discord.ext import commands
-from discord.ext.commands import MemberConverter
+from discord.ext.commands import MemberConverter,TextChannelConverter
 import Okari, ExpSys
 import Memes_name_subject_to_change as mem
 import os

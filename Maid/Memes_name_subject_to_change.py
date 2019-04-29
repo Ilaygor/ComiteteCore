@@ -5,7 +5,24 @@ import textwrap
 import json
 import os
 import random
-from Okari import AddText
+from Okari import AddText,GetAvatarFromUrl
+
+def CreateVisualMem(memname,url):
+    try:
+        base = Image.open(GetAvatarFromUrl(url)).convert('RGBA')
+    except OSError:
+        return None
+
+    memdata=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())
+    Addiction = Image.open('Maid/src/Images/memes/'+memdata['filename'])
+    Addiction = Addiction.resize((base.width,round(Addiction.height*(base.width/Addiction.width))))
+    base.paste(Addiction,(base.width-Addiction.width,base.height-Addiction.height),Addiction)
+    
+    path="Maid/src/Images/Temp/"+memname+'_'+str(random.randint(0,100))+".png"
+    base.save(path, format="png")
+
+    return path
+
 
 def CreateMem(memname,text:str):
     memdata=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())

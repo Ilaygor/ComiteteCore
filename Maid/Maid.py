@@ -4,6 +4,7 @@ from discord.ext.commands import MemberConverter,TextChannelConverter
 import Okari, ExpSys,Masta
 import Memes_name_subject_to_change as mem
 import os
+import json
 
 bot = commands.Bot(command_prefix='NM!', description='Сomitete System')
 
@@ -96,8 +97,16 @@ async def top(ctx, page:int="1"):
 @bot.command(name="memes")
 async def memes(ctx,memname,*args):
     if os.path.exists('Maid/src/Images/memes/{}.json'.format(memname)):
-        text=' '.join(args)
-        path=mem.CreateMem(memname,text)
+        typeMem=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())['type']
+        if (typeMem=='onetext'):
+            text=' '.join(args)
+            path=mem.CreateMem(memname,text)
+
+        elif(typeMem=='image'):
+            path=mem.CreateVisualMem(memname,args[0])
+            if (not path):
+                await ctx.send("URL не корректен!")
+                return
         file=File(path,filename=memname+".png")
         await ctx.send(file=file)
         os.remove(path)
@@ -127,7 +136,7 @@ async def on_member_remove(mem):
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
-    if is_testserver(message )and not message.author.bot:
+    if is_testserver(message )and not message.author.bot and not message.channel.id==323061768714846208:
         await ExpSys.AddExp(message.author.id,len(message.content)/10,message.channel)
         
 bot.run(open('Maid/AccessToken','r').read())

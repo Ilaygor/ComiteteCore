@@ -22,7 +22,6 @@ def GetTop(members,page):
 
     for mem in members:
         template = Image.open('Maid/src/Images/Top.png')
-
         Avatar = Image.open(GetAvatarFromUrl(mem['mem'].avatar_url_as(size=64)))
         Avatar.thumbnail((64,64))
         template.paste(Avatar,(80,9))

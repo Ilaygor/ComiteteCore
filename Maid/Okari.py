@@ -30,8 +30,11 @@ def GetTop(members,page):
 
         AddText(mem['mem'].name,(160, 15),template)
         AddText(mem['data'],(160, 40),template,size=18)
-
-        position=(str(page)+str(len(mems)+1)).rjust(3,'0')
+        num=len(mems)+1
+        if num==10:
+            position=(str(page+1)+'0').rjust(3,'0')
+        else:
+            position=(str(page)+str(num)).rjust(3,'0')
         AddText(position,(6,29),template,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
         
         mems.append(template)

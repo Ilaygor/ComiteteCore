@@ -12,6 +12,34 @@ def AddMember(member):
         Masta.ReactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
+def CreateProfile(member):
+    Info=Masta.GetMemInfo(member.id)
+
+    path= "Maid/src/Images/Temp/"+str(member.id)+".png"
+
+    base=Image.open('Maid/src/Images/Profile.png')
+    Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
+    base.paste(Avatar,(24,94))
+    del Avatar
+    AddText(member.name,(172, 114),base,size=20)
+
+    AddText(str(Info[0]).rjust(3,'0'),(430,192),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+
+    if (Info[1]!=0):
+        zero=2.16
+        Re= Info[1]/(Info[2]/100)
+        ImageDraw.Draw(base,'RGBA').rectangle([(174,191),(174+Re*zero,214)],fill=(255,90,0,255))
+
+    AddText(str(Info[3]).rjust(4,'0'),(52,233),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+
+    AddText(member.top_role.name,(180,145),base,color=(255,90,0),size=18)
+
+    AddText(str(Info[5]),(180,250),base,color=(255,255,255),size=18)
+
+    base.save(path)
+
+    return path
+
 def LostMember(member):
     CreateLostMessage(member.avatar_url_as(size=128),member.name,member.top_role.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
     Masta.DeactivateMember(member.id)

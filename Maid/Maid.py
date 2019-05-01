@@ -90,6 +90,16 @@ async def top(ctx, page:int="1"):
     await ctx.send(file=file)
     os.remove(path)
 
+@bot.command(name="profile")
+async def profile(ctx,member=None):
+    if (member):
+        author=await MemberConverter().convert(ctx,member)
+    else:
+        author=ctx.author
+    path=Okari.CreateProfile(author)
+    file=File(path,filename="LostMem.png")
+    await ctx.send(file=file)
+    os.remove(path)
 
 
 
@@ -136,7 +146,7 @@ async def on_member_remove(mem):
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
-    if is_testserver(message )and not message.author.bot :#and not message.channel.id==323061768714846208
+    if is_testserver(message )and not message.author.bot and not message.channel.id==323061768714846208:
         await ExpSys.AddExp(message.author.id,len(message.content)/10,message.channel)
         
 bot.run(open('Maid/AccessToken','r').read())

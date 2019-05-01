@@ -11,11 +11,12 @@ UsersData={}
 bot=discord.ext.commands.Bot
 
 def init():
-    for i in conn.cursor().execute("SELECT DiscordID,Xp,MaxXP,Level FROM LabMems WHERE IsActive=1"):
+    for i in conn.cursor().execute("SELECT DiscordID,Xp,MaxXP,Level,Mentions FROM LabMems WHERE IsActive=1"):
         UsersData[i[0]]={
             'level':i[3],
             'xp':i[1],
-            'maxxp':i[2]
+            'maxxp':i[2],
+            'mentions':i[4]
         }
     return 'done'
 
@@ -29,12 +30,19 @@ async def levelUp(channel,id,level):
     await channel.send(file=file)
     os.remove(path) 
 
+def AddMention(id):
+    UsersData[id]['mentions']+=1
+    cursor = conn.cursor()
+    cursor.execute("UPDATE LabMems SET Mentions=? WHERE DiscordID=?",[UsersData[id]['mentions'],id])
+    conn.commit()
+
 def AddMem(id):
-    usr=conn.cursor().execute("SELECT xp,MaxXP,level FROM LabMems WHERE DiscordID=?",[id]).fetchone()
+    usr=conn.cursor().execute("SELECT xp,MaxXP,level,Mentions FROM LabMems WHERE DiscordID=?",[id]).fetchone()
     UsersData[id]={
         'level':usr[2],
         'xp':usr[0],
-        'maxxp':usr[1]
+        'maxxp':usr[1],
+        'mentions':usr[3]
     }
 
 def DelMem(id):

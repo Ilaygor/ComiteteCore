@@ -136,7 +136,7 @@ async def on_member_remove(mem):
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
-    if is_testserver(message )and not message.author.bot and not message.channel.id==323061768714846208:
+    if is_testserver(message )and not message.author.bot :#and not message.channel.id==323061768714846208
         await ExpSys.AddExp(message.author.id,len(message.content)/10,message.channel)
         
 bot.run(open('Maid/AccessToken','r').read())

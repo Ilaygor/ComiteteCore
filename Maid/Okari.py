@@ -18,30 +18,25 @@ def LostMember(member):
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
 
 def GetTop(members,page):
-    mems=[]
 
-    for mem in members:
-        template = Image.open('Maid/src/Images/Top.png')
-        Avatar = Image.open(GetAvatarFromUrl(mem['mem'].avatar_url_as(size=64)))
+    base=Image.open('Maid/src/Images/Top.png')
+
+    for i in range(10):
+        height=83*i
+        Avatar = Image.open(GetAvatarFromUrl(members[i]['mem'].avatar_url_as(size=64)))
         Avatar.thumbnail((64,64))
-        template.paste(Avatar,(80,9))
+        base.paste(Avatar,(80,9+height))
         del Avatar
 
-        AddText(mem['mem'].name,(160, 15),template)
-        AddText(mem['data'],(160, 40),template,size=18)
-        num=len(mems)+1
+        AddText(members[i]['mem'].name,(160, 15+height),base)
+        AddText(members[i]['data'],(160, 40+height),base,size=18)
+        num=i+1
         if num==10:
             position=(str(page+1)+'0').rjust(3,'0')
         else:
             position=(str(page)+str(num)).rjust(3,'0')
-        AddText(position,(6,29),template,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
-        
-        mems.append(template)
+        AddText(position,(6,29+height),base,color=(255,90,0),size=30,font="BONX-TubeBold.otf")
 
-    base=Image.new('RGBA',(template.width,template.height*10),color=(0,0,0,0))
-
-    for i in range(len(members)):
-        base.paste(mems[i],(0,0+template.height*i))
     
     path="Maid/src/Images/Temp/top"+str(page)+".png"
     base.save(path)

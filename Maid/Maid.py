@@ -149,7 +149,7 @@ async def on_message(message):
     if is_testserver(message)and not message.author.bot and not message.channel.id==323061768714846208:
         if (len(message.mentions)):
             for i in list(set(message.mentions)):
-                if not i.bot and not i.id==message.author.id:
+                if not i.bot and not message.author.bot and not i.id==message.author.id:
                     ExpSys.AddMention(i.id)
 
         await ExpSys.AddExp(message.author.id,len(message.content)/10,message.channel)

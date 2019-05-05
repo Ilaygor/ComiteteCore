@@ -9,15 +9,24 @@ from Okari import AddText,GetAvatarFromUrl
 
 def CreateVisualMem(memname,url):
     try:
-        base = Image.open(GetAvatarFromUrl(url)).convert('RGBA')
+        base = Image.open(GetAvatarFromUrl(url))
     except OSError:
         return None
 
     memdata=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())
     Addiction = Image.open('Maid/src/Images/memes/'+memdata['filename'])
-    Addiction = Addiction.resize((base.width,round(Addiction.height*(base.width/Addiction.width))))
-    base.paste(Addiction,(base.width-Addiction.width,base.height-Addiction.height),Addiction)
+
+    Addiction = Addiction.resize((round(base.width*memdata['percent'][0]),round(Addiction.height*(base.width*memdata['percent'][0]/Addiction.width))))
+
+    if memdata.get('filter'):
+        fillter=Image.new('RGBA',(base.width,base.height),color=(memdata['filter'][0],memdata['filter'][1],memdata['filter'][2],memdata['filter'][3]))
+        base.paste(fillter,(0,0),fillter)
     
+    if memdata['position']=="right": 
+        base.paste(Addiction,(base.width-Addiction.width,base.height-Addiction.height),Addiction)
+    elif memdata['position']=="left":
+        base.paste(Addiction,(0,base.height-Addiction.height),Addiction)
+
     path="Maid/src/Images/Temp/"+memname+'_'+str(random.randint(0,100))+".png"
     base.save(path, format="png")
 

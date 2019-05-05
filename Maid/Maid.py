@@ -76,15 +76,44 @@ async def lostmem(ctx):
     await ctx.send(file=file)
     os.remove(path)
 
+@bot.command(name="setbg")
+async def setbg(ctx,url=None):
+    if url=="clear":
+        os.remove("Maid/src/Images/Usr/"+str(ctx.author.id)+"/profile.png")
+        await ctx.send('Задний фон удалён.')
+    elif url:
+        try:
+            Okari.SetBG(ctx.author.id,url)
+            path=Okari.CreateProfile(ctx.author)
+            file=File(path,filename="profile.png")
+            await ctx.send(file=file)
+            os.remove(path)
+        except:
+            await ctx.send('Некорректная ссылка на изображение.')
+    else:
+        await ctx.send('Отсутсвует ссылка на изображение.')
+    
+
 @bot.command(name="top")
-async def top(ctx, page:int="1"):
+async def top(ctx,cat:str="exp", page:int="1"):
     members=[]
     page=int(page)
-    for i in Masta.GetTopMembers(page-1):
-        members.append({
-            "mem":ctx.guild.get_member(i[0]),
-            "data":str(round(i[1],2))+" xp"
-        })
+    if cat == 'exp':
+        for i in Masta.GetTopMembers(page-1):
+            members.append({
+                "mem":ctx.guild.get_member(i[0]),
+                "data":str(round(i[1],2))+" xp"
+            })
+    elif cat=="men":
+        for i in Masta.GetTopMenMembers(page-1):
+            members.append({
+                "mem":ctx.guild.get_member(i[0]),
+                "data":str(round(i[1],2))+" mentions"
+            })
+    else:
+        await ctx.send("Параметр не найден!")
+        return
+
     path=Okari.GetTop(members,page-1)
     file=File(path,filename="LostMem.png")
     await ctx.send(file=file)
@@ -97,7 +126,7 @@ async def profile(ctx,member=None):
     else:
         author=ctx.author
     path=Okari.CreateProfile(author)
-    file=File(path,filename="LostMem.png")
+    file=File(path,filename="profile.png")
     await ctx.send(file=file)
     os.remove(path)
 

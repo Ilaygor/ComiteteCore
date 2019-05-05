@@ -16,8 +16,15 @@ def CreateProfile(member):
     Info=Masta.GetMemInfo(member.id)
 
     path= "Maid/src/Images/Temp/"+str(member.id)+".png"
-
+    
     base=Image.open('Maid/src/Images/Profile.png')
+
+    if os.path.exists("Maid/src/Images/Usr/"+str(member.id)+"/profile.png"):
+        bg=Image.open("Maid/src/Images/Usr/"+str(member.id)+"/profile.png")
+        bg.paste(base,(0,0),base)
+        base=bg
+        del bg
+
     Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
     base.paste(Avatar,(24,94))
     del Avatar
@@ -44,6 +51,23 @@ def LostMember(member):
     CreateLostMessage(member.avatar_url_as(size=128),member.name,member.top_role.name).save("Maid/src/Images/Temp/"+str(member.id)+".png", format="png")
     Masta.DeactivateMember(member.id)
     return "Maid/src/Images/Temp/"+str(member.id)+".png"
+
+def SetBG(id,url):
+    bg=Image.open(GetAvatarFromUrl(url))
+    if not os.path.exists("Maid/src/Images/Usr/"+str(id)):
+        os.mkdir("Maid/src/Images/Usr/"+str(id))
+
+    if bg.width > bg.height:
+        bg = bg.resize((round(bg.width*(400/bg.height)), 400))
+        bg = bg.crop(box=(round(bg.width/2)-265,0,round(bg.width/2)+265,400))
+    elif bg.width < bg.height:
+        bg = bg.resize((530, round(bg.height*(530/bg.width))))
+        bg = bg.crop(box=(0,0,530,400))
+    else:
+        print(1)
+        bg.thumbnail ((530,530))
+        bg = bg.crop(box=(0,round(bg.width/2)+200,530,round(bg.width/2)-200))
+    bg.save("Maid/src/Images/Usr/"+str(id)+"/profile.png")
 
 def GetTop(members,page):
 

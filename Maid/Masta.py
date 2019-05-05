@@ -11,6 +11,10 @@ def GetTopMembers(page):
     users=10*page
     return conn.cursor().execute("SELECT DiscordID,(Xp+MaxXP*Level) FROM LabMems Where IsActive='1' ORDER BY Level DESC,MaxXP DESC,Xp DESC LIMIT ?,?",[0+users,10+users])
 
+def GetTopMenMembers(page):
+    users=10*page
+    return conn.cursor().execute("SELECT DiscordID,Mentions FROM LabMems Where IsActive='1' ORDER BY Mentions DESC LIMIT ?,?",[0+users,10+users])
+
 def CheckMember(id):
     return conn.cursor().execute("SELECT count(LabmemNum)as 'c' FROM LabMems WHERE DiscordID=?",[id]).fetchone()[0]==1
 

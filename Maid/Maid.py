@@ -20,6 +20,7 @@ infochan=198892670456692737
 async def on_ready():
     print('ExpSys --------- '+ExpSys.init())
     print('Logged in as')
+    
     print(bot.user.name)
     print(bot.user.id)   
 
@@ -135,6 +136,7 @@ async def profile(ctx,member=None):
 #memes
 @bot.command(name="memes")
 async def memes(ctx,memname,*args):
+    #await ctx.message.delete()
     if os.path.exists('Maid/src/Images/memes/{}.json'.format(memname)):
         typeMem=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())['type']
         if (typeMem=='onetext'):

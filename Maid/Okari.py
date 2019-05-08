@@ -112,7 +112,7 @@ def CreateFirstWelcomeMessage(memberAvatar,name):
 def CreateLevelUpMessage(memberAvatar,name,level:str):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
     base = Image.open('Maid/src/Images/LabmemberLevelUP.png')
-    ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
+    #ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
     base.paste(Avatar,(12,11))
     AddText(name,(160, 85),base)
     AddText(level.rjust(3,'0'),(415,30),base,color=(255,90,0),size=30,font="BONX-TubeBold.otf")

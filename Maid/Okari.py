@@ -97,6 +97,7 @@ def GetTop(members,page):
 
 def CreatWelcomeMessage(memberAvatar,name):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
+    Avatar.thumbnail((128,128))
     base = Image.open('Maid/src/Images/LabmemberReturn.png')
     base.paste(Avatar,(12,11))
     AddText(name,(160, 80),base)
@@ -104,6 +105,7 @@ def CreatWelcomeMessage(memberAvatar,name):
 
 def CreateFirstWelcomeMessage(memberAvatar,name):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
+    Avatar.thumbnail((128,128))
     base = Image.open('Maid/src/Images/NewLabmember.png')
     base.paste(Avatar,(12,11))
     AddText(name,(160, 80),base)
@@ -111,6 +113,7 @@ def CreateFirstWelcomeMessage(memberAvatar,name):
 
 def CreateLevelUpMessage(memberAvatar,name,level:str):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
+    Avatar.thumbnail((128,128))
     base = Image.open('Maid/src/Images/LabmemberLevelUP.png')
     #ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
     base.paste(Avatar,(12,11))
@@ -121,6 +124,7 @@ def CreateLevelUpMessage(memberAvatar,name,level:str):
 
 def CreateLostMessage(memberAvatar,name,role):
     Avatar = Image.open(GetAvatarFromUrl(memberAvatar))
+    Avatar.thumbnail((128,128))
     ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(255,0,0,70))
     base = Image.open('Maid/src/Images/LabmemberLost.png')
     base.paste(Avatar,(12,11))

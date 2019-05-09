@@ -1,4 +1,4 @@
-from discord import File,Member
+from discord import File,Member,Embed
 from discord.ext import commands
 from discord.ext.commands import MemberConverter,TextChannelConverter
 import Okari, ExpSys,Masta
@@ -25,7 +25,7 @@ async def on_ready():
     print(bot.user.id)   
 
 #BotCommands
-@bot.command(name="@integrate")
+@bot.command(name="@integrate",enabled=False,hidden=True)
 @commands.check(is_owner)
 async def integrate(ctx,*args):
     for i in ctx.guild.members:
@@ -35,16 +35,16 @@ async def integrate(ctx,*args):
             ExpSys.AddMem(i.id)
     await ctx.send("Done")
 
-@bot.command(name="@clear")
-@commands.check(is_owner)
-async def clear(ctx,chan,count):
-    channel=await TextChannelConverter().convert(ctx,chan)
+
+@bot.command(name="clear",help="Чистит канал от сообщений бота. Требует пинг (#канал) и число последних сообщений.",usage="#Канал Число",brief="Чистка канала от бота")
+async def clear(ctx,channel,count):
+    channel=await TextChannelConverter().convert(ctx,channel)
     async for i in channel.history(limit=int(count)):
         if i.author.id==bot.user.id:
             await i.delete()
     await ctx.send("Done")
 
-@bot.command(name="@addmem")
+@bot.command(name="@addmem",enabled=False,hidden=True)
 @commands.check(is_owner)
 async def addmem(ctx,*args):
     if args:
@@ -57,18 +57,18 @@ async def addmem(ctx,*args):
     await ctx.send(file=file)
     os.remove(path)  
 
-@bot.command(name="@levelup")
+@bot.command(name="@levelup",enabled=False,hidden=True)
 @commands.check(is_owner)
 async def levelup(ctx,level):
     await ExpSys.levelUp(ctx.channel,ctx.author.id,int(level))
 
-@bot.command(name="@addexp")
+@bot.command(name="@addexp",enabled=False,hidden=True)
 @commands.check(is_owner)
 async def addexp(ctx,arg1,arg2):
     author=await MemberConverter().convert(ctx,arg1)
     await ExpSys.AddExp(author.id,arg2,ctx.channel)
 
-@bot.command(name="@lostmem")
+@bot.command(name="@lostmem",enabled=False,hidden=True)
 @commands.check(is_owner)
 async def lostmem(ctx):
     ExpSys.DelMem(ctx.author.id)
@@ -77,7 +77,7 @@ async def lostmem(ctx):
     await ctx.send(file=file)
     os.remove(path)
 
-@bot.command(name="setbg")
+@bot.command(name="setbg", help="Устанавливает задний фон для профиля. Требуется рабочая ссылка на изображение.",usage="Ссылка",brief="Задник профиля")
 async def setbg(ctx,url=None):
     if url=="clear":
         os.remove("Maid/src/Images/Usr/"+str(ctx.author.id)+"/profile.png")
@@ -95,7 +95,7 @@ async def setbg(ctx,url=None):
         await ctx.send('Отсутсвует ссылка на изображение.')
     
 
-@bot.command(name="top")
+@bot.command(name="top", help="Ввыводит рейтинг пользователя.\nТипы:\n> exp - выводит рейтинг пользователей основываясь на опыте получнном пользователями.\n> men - выводит рейтинг пользователей основываясь на количестве упоминаня пользователей.",usage="[Тип == exp]",brief="Рейтинг пользователей")
 async def top(ctx,cat:str="exp", page:int="1"):
     members=[]
     page=int(page)
@@ -120,7 +120,7 @@ async def top(ctx,cat:str="exp", page:int="1"):
     await ctx.send(file=file)
     os.remove(path)
 
-@bot.command(name="profile")
+@bot.command(name="profile", help="Выводит профиль пользователя. Можно сделать пинг (@Пользовтель) чтобы получить информацию о профиле пользователя.",usage="[@Пользователь]",brief="Профиль")
 async def profile(ctx,member=None):
     if (member):
         author=await MemberConverter().convert(ctx,member)
@@ -134,7 +134,7 @@ async def profile(ctx,member=None):
 
 
 #memes
-@bot.command(name="memes")
+@bot.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема.\n> saymem - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема.",usage="Мем Данные_мема",brief="Мемген")
 async def memes(ctx,memname,*args):
     #await ctx.message.delete()
     if os.path.exists('Maid/src/Images/memes/{}.json'.format(memname)):

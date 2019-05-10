@@ -62,7 +62,7 @@ async def addmem(ctx,*args):
 async def levelup(ctx,level):
     await ExpSys.levelUp(ctx.channel,ctx.author.id,int(level))
 
-@bot.command(name="@addexp",enabled=False,hidden=True)
+@bot.command(name="@addexp",enabled=True,hidden=True)
 @commands.check(is_owner)
 async def addexp(ctx,arg1,arg2):
     author=await MemberConverter().convert(ctx,arg1)
@@ -77,14 +77,18 @@ async def lostmem(ctx):
     await ctx.send(file=file)
     os.remove(path)
 
-@bot.command(name="setbg", help="Устанавливает задний фон для профиля. Требуется рабочая ссылка на изображение.",usage="Ссылка",brief="Задник профиля")
+@bot.command(name="setbg", help="Устанавливает задний фон для профиля. Требуется приложить изображение или рабочую ссылку на изображение. Можно вместо ссылки указать **clear**, чтобы удалить фон.",usage="[Ссылка]",brief="Задник профиля")
 async def setbg(ctx,url=None):
     if url=="clear":
         os.remove("Maid/src/Images/Usr/"+str(ctx.author.id)+"/profile.png")
         await ctx.send('Задний фон удалён.')
-    elif url:
+    elif url or ctx.message.attachments[0].height:
         try:
-            Okari.SetBG(ctx.author.id,url)
+            if url:
+                urltoPic=url
+            else:
+                urltoPic=ctx.message.attachments[0].url
+            Okari.SetBG(ctx.author.id,urltoPic)
             path=Okari.CreateProfile(ctx.author)
             file=File(path,filename="profile.png")
             await ctx.send(file=file)
@@ -134,8 +138,8 @@ async def profile(ctx,member=None):
 
 
 #memes
-@bot.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема.\n> saymem - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема.",usage="Мем Данные_мема",brief="Мемген")
-async def memes(ctx,memname,*args):
+@bot.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема или приложеное изображение.\n> saymem - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема или приложеное изображение.",usage="Мем Данные_мема",brief="Мемген")
+async def memes(ctx,memname=None,*args):
     #await ctx.message.delete()
     if os.path.exists('Maid/src/Images/memes/{}.json'.format(memname)):
         typeMem=json.loads(open('Maid/src/Images/memes/{}.json'.format(memname)).read())['type']
@@ -144,13 +148,19 @@ async def memes(ctx,memname,*args):
             path=mem.CreateMem(memname,text)
 
         elif(typeMem=='image'):
-            path=mem.CreateVisualMem(memname,args[0])
+            if len(args)>=1:
+                urltoPic=args[0]
+            else:
+                urltoPic=ctx.message.attachments[0].url
+            path=mem.CreateVisualMem(memname,urltoPic)
             if (not path):
                 await ctx.send("URL не корректен!")
                 return
         file=File(path,filename=memname+".png")
         await ctx.send(file=file)
         os.remove(path)
+    elif not memname:
+        await ctx.send("Не указано имя мема. Воспользуйтесь коммандой `NM!help memes`, чтобы получить больше информации.")
     else:
         await ctx.send("Мем с именем {} не найден!".format(args[0]))
 

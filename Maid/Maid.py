@@ -120,7 +120,7 @@ async def top(ctx,cat:str="exp", page:int="1"):
         return
 
     path=Okari.GetTop(members,page-1)
-    file=File(path,filename="LostMem.png")
+    file=File(path,filename="top.png")
     await ctx.send(file=file)
     os.remove(path)
 

@@ -2,6 +2,7 @@ import discord
 from discord.ext.commands import TextChannelConverter
 from discord.ext import commands
 from . import SQLWorker
+from datetime import datetime
 
 def is_owner():
     async def predicate(ctx):
@@ -41,6 +42,41 @@ class Settings(commands.Cog):
         SQLWorker.SetInfoChan(ctx.guild.id,ch.id)
         await ctx.send("InfoChan changed for {}".format(channel))
 
+    @commands.command(name="ignor" , help="Игнор-лист, для того чтобы бот не защитывал XP или упоминания в каналах админа сервера.\nНапример добавьте в игнор-лист каналы в которых предназначенные для флуда или каналы предназначенные для ботов.\nДействия:\n> list - выводит список игнорируемых каналов.\n> add - добавляет канал в список игнорируемых каналов, требует пинг канала.\n> rem - девушка с голубыми волосами, близнец ram... Не та Информация, т.е. данное действие отвечает за удаление канала из игнор листа, требует пинг канала.",usage="[Действие == list] [Канал]",brief="Игнор-лист")
+    @is_owner()
+    async def ignor(self,ctx,action:str="list", channel=None):
+        if action=="list":
+            IgnorList=SQLWorker.GetIgnorList(ctx.guild.id)
+            embed=discord.Embed(title="Cписок игнорируемых каналов:", description="Каналы в которых бот не учитывает XP.")
+            for i in IgnorList:
+                embed.add_field(name=ctx.guild.get_channel(i[0]).name,inline=False,value="Добавлен: "+str(datetime.fromtimestamp(i[1]).date()))
+            await ctx.send(embed=embed)
+        elif action == "add":
+            if channel:
+                ch=await TextChannelConverter().convert(ctx,channel)
+                if not SQLWorker.checkChennel(ctx.guild.id,ch.id):
+                    SQLWorker.AddIgnorList(ch.id,ctx.guild.id)
+                    embed=discord.Embed(title="Канал {} успешно добавлен в список игнора.".format(ch.name))
+                    await ctx.send(embed=embed)
+                else:
+                    embed=discord.Embed(title="Канал {} уже добавлен в список игнора.".format(ch.name))
+                    await ctx.send(embed=embed)
+            else:
+                await ctx.send("Не указан канал!")
+        elif action == "rem":
+            if channel:
+                ch=await TextChannelConverter().convert(ctx,channel)
+                if SQLWorker.checkChennel(ctx.guild.id,ch.id):
+                    SQLWorker.DelIgnorList(ch.id,ctx.guild.id)
+                    embed=discord.Embed(title="Канал {} успешно удалён из списока игнора.".format(ch.name))
+                    await ctx.send(embed=embed)
+                else:
+                    embed=discord.Embed(title="Канал {} отсутсвует в списоке игнора.".format(ch.name))
+                    await ctx.send(embed=embed)
+            else:
+                await ctx.send("Не указан канал!")
+        else:
+            await ctx.send("Неизвестное действие.")
 
 def setup(client):
     client.add_cog(Settings(client))

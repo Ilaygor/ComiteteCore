@@ -19,7 +19,7 @@ def CreateProfile(member):
     Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
     base.paste(Avatar,(24,94))
     del Avatar
-    AddText(member.name,(172, 114),base,size=20)
+    AddText(member.name,(172, 97),base,size=20)
 
     AddText(str(Info[0]).rjust(3,'0'),(430,192),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
 
@@ -28,10 +28,11 @@ def CreateProfile(member):
         Re= Info[1]/(Info[2]/100)
         ImageDraw.Draw(base,'RGBA').rectangle([(174,191),(174+Re*zero,214)],fill=(255,90,0,255))
 
-    AddText(str(Info[3]).rjust(4,'0'),(52,233),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+    AddText(str(Info[3]).rjust(4,'0'),(28,265),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
 
-    AddText(member.top_role.name,(180,145),base,color=member.top_role.colour.to_rgb(),size=18)
+    AddText(member.top_role.name,(180,125),base,color=member.top_role.colour.to_rgb(),size=18)
 
+    AddText("XP:"+str(Info[0]*Info[2]+round(Info[1],1)).rjust(10,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     #AddText(str(Info[5]),(180,250),base,color=(255,255,255),size=18)
 
     base.save(path)

@@ -65,3 +65,6 @@ async def checkXp(user,id,channel):
         user['level']+=1
         await levelUp(channel,id,user['level'])
         await checkXp(user,id,channel)
+
+def checkChennel(serverid,channelid):
+    return conn.cursor().execute("SELECT count(channelid) FROM IgnorList WHERE ServerID ={} and ChannelID={}".format(serverid,channelid)).fetchone()[0]>=1

@@ -9,7 +9,7 @@ class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема или приложеное изображение.\n> saymem - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема или приложеное изображение.",usage="Мем Данные_мема",brief="Мемген")
+    @commands.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема или приложеное изображение.\n> sayher - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема или приложеное изображение.",usage="Мем Данные_мема",brief="Мемген")
     async def memes(self,ctx,memname=None,*args):
         #await ctx.message.delete()
         if os.path.exists('src/Images/memes/{}.json'.format(memname)):

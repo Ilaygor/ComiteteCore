@@ -86,7 +86,7 @@ class Maid(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self,message):
         #await self.bot.process_commands(message)
-        if not message.author.bot and not message.channel.id==572807088787554304:
+        if not message.author.bot and not ExpSys.checkChennel(message.guild.id,message.channel.id):
             if (len(message.mentions)):
                 for i in list(set(message.mentions)):
                     if not i.bot and not message.author.bot and not i.id==message.author.id:

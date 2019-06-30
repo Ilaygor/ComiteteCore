@@ -1,0 +1,9 @@
+{
+    "type":"image",
+    "width":256,
+    "height":54,
+    "filename":"tobecontinue.png",
+    "percent":[0.6],
+    "position":"left",
+    "filter":[132,101,70,120]
+    }

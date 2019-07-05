@@ -31,8 +31,9 @@ def CreateProfile(member):
     AddText(str(Info[3]).rjust(4,'0'),(28,265),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
 
     AddText(member.top_role.name,(180,125),base,color=member.top_role.colour.to_rgb(),size=18)
-
-    AddText("XP:"+str(Info[0]*Info[2]+round(Info[1],1)).rjust(10,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
+    
+    xp=round(Info[0]*Info[2]+Info[1],1)
+    AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     #AddText(str(Info[5]),(180,250),base,color=(255,255,255),size=18)
 
     base.save(path)
@@ -59,18 +60,6 @@ def GetTop(members,page):
     base.save(path)
     return path
 
-
-
-def AddText(text,position,img,color=(255,255,255),size=22,font='ariblk.ttf'):
-    from PIL import ImageFont
-    Font = ImageFont.truetype("src/Fonts/"+font, size)
-    ImageDraw.Draw(img).text(position,text,color,font=Font)
-
-def GetAvatarFromUrl(url):
-    from io import BytesIO
-    from requests import get
-    return BytesIO(get(url).content)
-
 def SetBG(id,url):
     bg=Image.open(GetAvatarFromUrl(url))
     if not os.path.exists("src/Images/Usr/"+str(id)):
@@ -86,3 +75,21 @@ def SetBG(id,url):
         bg.thumbnail((530,530))
         bg = bg.crop(box=(0,round(bg.width/2)+200,530,round(bg.width/2)-200))
     bg.save("src/Images/Usr/"+str(id)+"/profile.png")
+
+def ConvrterToCI(num:int):
+    lennum=len(str(round(num)))
+    if lennum > 6:
+        return str(round(num/pow(10,6),2))+"M"
+    if lennum > 3:
+        return str(round(num/pow(10,3),2))+"K"
+    return str(num)
+    
+def AddText(text,position,img,color=(255,255,255),size=22,font='ariblk.ttf'):
+    from PIL import ImageFont
+    Font = ImageFont.truetype("src/Fonts/"+font, size)
+    ImageDraw.Draw(img).text(position,text,color,font=Font)
+
+def GetAvatarFromUrl(url):
+    from io import BytesIO
+    from requests import get
+    return BytesIO(get(url).content)

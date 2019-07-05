@@ -32,6 +32,12 @@ class Settings(commands.Cog):
             if memlist[mem]==1:
                 SQLWorker.SetDead(mem)
         
+
+        for mem in ctx.guild.members:
+            for role in mem.roles:
+                if not SQLWorker.CheckRole(ctx.guild.id,mem.id,role.id) and not role.is_default():
+                    SQLWorker.AddRoles(ctx.guild.id,mem.id,role.id)                    
+
         await ctx.send("Audit completed!")
        
 

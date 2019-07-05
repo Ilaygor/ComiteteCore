@@ -48,14 +48,18 @@ class Maid(commands.Cog):
             await ctx.send('Отсутсвует ссылка на изображение.')
 
     @commands.command(name="top", help="Выводит рейтинг пользователя.\nТипы:\n> exp - выводит рейтинг пользователей основываясь на опыте получнном пользователями.\n> men - выводит рейтинг пользователей основываясь на количестве упоминаня пользователей.",usage="[Тип == exp]",brief="Рейтинг пользователей")
-    async def top(self,ctx,cat:str="exp", page:int="1"):
+    async def top(self,ctx,cat:str="exp", page:int=1):
         members=[]
         page=int(page)
+        if cat.isnumeric():
+            page=int(cat)
+            cat="exp"
+
         if cat == 'exp':
             for i in SQLWorker.GetTopMembers(page-1):
                 members.append({
                     "mem":ctx.guild.get_member(i[0]),
-                    "data":str(round(i[1],2))+" xp"
+                    "data":PictureCreator.ConvrterToCI(round(i[1],2))+" xp"
                 })
         elif cat=="men":
             for i in SQLWorker.GetTopMenMembers(page-1):
@@ -77,6 +81,7 @@ class Maid(commands.Cog):
     async def on_member_join(self,member):
         if not member.bot:        
             ExpSys.AddMem(member.id)
+ 
     
     @commands.Cog.listener()
     async def on_member_remove(self,member):

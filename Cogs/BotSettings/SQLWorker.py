@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 conn = sqlite3.connect("BotDB.db")
+role = sqlite3.connect("Cogs/Roler/RoleList.db")
 
 def SetInfoChan(serverid,channelid):
     cursor = conn.cursor()
@@ -42,3 +43,14 @@ def AddNewmem(serverid,id):
 
 def checkChennel(serverid,channelid):
     return conn.cursor().execute("SELECT count(channelid) FROM IgnorList WHERE ServerID ={} and ChannelID={}".format(serverid,channelid)).fetchone()[0]>=1
+
+def CheckRole(serverid,id,RoleId):
+    return role.cursor().execute("SELECT count(RoleId) FROM RoleList WHERE RoleId={} and ServerID ={} and UserId={}".format(RoleId,serverid,id)).fetchone()[0]>=1
+def AddRoles(serverid,id,RoleId):
+    cursor = role.cursor()
+    cursor.execute("INSERT INTO RoleList (RoleId,ServerId,UserId) VALUES (?,?,?);",[RoleId,serverid,id])
+    role.commit()
+def DelRole(RoleId):
+    cursor = role.cursor()
+    cursor.execute("DELETE FROM RoleList WHERE RoleId=?",[RoleId])
+    role.commit()

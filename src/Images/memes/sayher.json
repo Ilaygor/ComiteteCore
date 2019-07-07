@@ -6,5 +6,6 @@
 "placeheight":230, 
 "font-size":20,
 "filename":"sayher.png",
-"textcolor":"#000"
+"textcolor":"#000",
+"font":"ariblk.ttf"
 }

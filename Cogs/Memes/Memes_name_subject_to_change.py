@@ -39,7 +39,7 @@ def CreateMem(memname,text:str):
     for line in textwrap.wrap(text,width=width):
         offset=linecount*memdata['font-size']
         if offset<memdata['placeheight']:
-            AddText(('{:^'+str(width)+'}').format(line),(memdata['x'], memdata['y']+offset),base,size=memdata['font-size'],color=ImageColor.getrgb(memdata['textcolor']))
+            AddText(('{:^'+str(width)+'}').format(line),memdata,base,position=(memdata['x'], memdata['y']+offset))
             linecount+=1
         else:
             break
@@ -47,12 +47,19 @@ def CreateMem(memname,text:str):
     base.save(path, format="png")
     return path
 
-
-
-def AddText(text,position,img,color=(255,255,255),size=22,font='ariblk.ttf'):
+def AddText(text,memdata,img,position=None):
     from PIL import ImageFont
-    Font = ImageFont.truetype("src/Fonts/"+font, size)
-    ImageDraw.Draw(img).text(position,text,color,font=Font)
+    if not position:
+        position=(memdata['x'], memdata['y'])
+    textimg=Image.new('RGBA',(img.width,img.height))
+
+
+    Font = ImageFont.truetype("src/Fonts/"+memdata['font'], memdata['font-size'])
+    ImageDraw.Draw(textimg).text(position,text,ImageColor.getrgb(memdata['textcolor']),font=Font)
+    if memdata.get('rotate'):
+        textimg=textimg.rotate(memdata['rotate'],expand=False)
+    img.paste(textimg,(0,0),textimg)
+
 
 def GetAvatarFromUrl(url):
     from io import BytesIO

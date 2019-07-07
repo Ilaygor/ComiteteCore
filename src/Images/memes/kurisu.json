@@ -1,0 +1,12 @@
+{
+    "type":"onetext",
+    "x":320,
+    "y":410, 
+    "placewidth":135, 
+    "placeheight":20, 
+    "font-size":15,
+    "rotate":-15,
+    "filename":"kurisu.png",
+    "textcolor":"#000",
+    "font":"ariblk.ttf"
+}

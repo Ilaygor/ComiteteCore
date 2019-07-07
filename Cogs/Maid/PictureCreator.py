@@ -30,7 +30,7 @@ def CreateProfile(member):
 
     AddText(str(Info[3]).rjust(4,'0'),(28,265),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
 
-    AddText(member.top_role.name,(180,125),base,color=member.top_role.colour.to_rgb(),size=18)
+    AddText(member.top_role.name,(180,125),base,color=member.colour.to_rgb(),size=18)
     
     xp=round(Info[0]*Info[2]+Info[1],1)
     AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")

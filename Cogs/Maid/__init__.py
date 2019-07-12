@@ -26,6 +26,17 @@ class Maid(commands.Cog):
         await ctx.send(file=file)
         os.remove(path)
 
+    @commands.command(name="rank", help="Выводит ранг пользователя. Можно сделать пинг (@Пользовтель) чтобы получить информацию о ранге пользователя.",usage="[@Пользователь]",brief="Ранг")
+    async def rank(self,ctx,member=None):
+        if (member):
+            author=await commands.MemberConverter().convert(ctx,member)
+        else:
+            author=ctx.author
+        path=PictureCreator.CreateRank(author)
+        file=discord.File(path,filename="profile.png")
+        await ctx.send(file=file)
+        os.remove(path)
+
     @commands.command(name="setbg", help="Устанавливает задний фон для профиля. Требуется приложить изображение или рабочую ссылку на изображение. Можно вместо ссылки указать **clear**, чтобы удалить фон.",usage="[Ссылка]",brief="Задник профиля")
     async def setbg(self,ctx,url=None):
         if url=="clear":
@@ -46,6 +57,14 @@ class Maid(commands.Cog):
                 await ctx.send('Некорректная ссылка на изображение.')
         else:
             await ctx.send('Отсутсвует ссылка на изображение.')
+
+    @commands.command(name="settext", help="Задаёт подпись профиля.",usage="[Информация]",brief="Информация пользователя")
+    async def settext(self,ctx,*args):
+        SQLWorker.SetInfo(ctx.author.id," ".join(args))
+        '''path=PictureCreator.CreateProfile(ctx.author)
+        file=discord.File(path,filename="profile.png")
+        await ctx.send(file=file)
+        os.remove(path)'''
 
     @commands.command(name="top", help="Выводит рейтинг пользователя.\nТипы:\n> exp - выводит рейтинг пользователей основываясь на опыте получнном пользователями.\n> men - выводит рейтинг пользователей основываясь на количестве упоминаня пользователей.",usage="[Тип == exp]",brief="Рейтинг пользователей")
     async def top(self,ctx,cat:str="exp", page:int=1):

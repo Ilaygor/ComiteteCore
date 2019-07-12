@@ -3,9 +3,41 @@ from PIL import ImageDraw
 import os
 from . import SQLWorker
 
+def CreateRank(member):
+    Info=SQLWorker.GetMemInfo(member.id)
+    
+    path= "Temp/"+str(member.id)+".png"
+    
+    base=Image.open('src/Images/Rank.png')
+
+    if os.path.exists("src/Images/Usr/"+str(member.id)+"/profile.png"):
+        bg=Image.open("src/Images/Usr/"+str(member.id)+"/profile.png").crop(box=(0,70,530,70+188))
+        bg.paste(base,(0,0),base)
+        base=bg
+        del bg
+    
+    Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
+    base.paste(Avatar,(24,34))
+    del Avatar
+    
+    AddText(member.name,(172, 37),base,size=20)
+    AddText(str(Info[0]).rjust(3,'0')+"LV",(327,97),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
+    AddText(member.top_role.name,(180,62),base,color=member.colour.to_rgb(),size=18)
+    xp=round(Info[0]*Info[2]+Info[1],1)
+    AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,97),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
+    if (Info[1]!=0):
+        zero=2.16
+        Re= Info[1]/(Info[2]/100)
+        ImageDraw.Draw(base,'RGBA').rectangle([(174,125),(174+Re*zero,154)],fill=(255,90,0,255))
+            
+    AddText(str(SQLWorker.GetRank(member.id)).rjust(4,'0'),(431,129),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+    base.save(path)
+
+    return path
+
 def CreateProfile(member):
     Info=SQLWorker.GetMemInfo(member.id)
-
+    
     path= "Temp/"+str(member.id)+".png"
     
     base=Image.open('src/Images/Profile.png')
@@ -21,7 +53,7 @@ def CreateProfile(member):
     del Avatar
     AddText(member.name,(172, 97),base,size=20)
 
-    AddText(str(Info[0]).rjust(3,'0'),(430,192),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+    AddText(str(Info[0]).rjust(3,'0')+"LV",(327,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
 
     if (Info[1]!=0):
         zero=2.16
@@ -30,15 +62,62 @@ def CreateProfile(member):
 
     AddText(str(Info[3]).rjust(4,'0'),(28,265),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
 
+    
     AddText(member.top_role.name,(180,125),base,color=member.colour.to_rgb(),size=18)
     
     xp=round(Info[0]*Info[2]+Info[1],1)
     AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
-    #AddText(str(Info[5]),(180,250),base,color=(255,255,255),size=18)
+    
+    AddText(str(SQLWorker.GetRank(member.id)).rjust(4,'0'),(431,190),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
+    
+    
+    text=SQLWorker.GetInfo(member.id)
+
+    fontsize=18
+    height=138
+    width=500
+    lines=WrapText(text,width,fontsize)
+    while fontsize>10:
+        if fontsize*len(lines) > height:
+            fontsize-=1
+            lines=WrapText(text,width,fontsize)
+        else:
+            break
+    offset=0
+    
+    for i in lines:
+        if (offset+1)*fontsize < height:
+            AddText(i,(175,240+offset*fontsize),base,color=(255,255,255),size=fontsize,font='ariblk.ttf')
+            offset+=1
+        else:
+            break
 
     base.save(path)
-
+    
     return path
+
+def WrapText(text,width,fontsize):
+    outputList=[]
+    import math
+    CharLength=math.floor(width/fontsize)
+
+    Line=""
+    LineLenght=CharLength
+    for i in text.split(" "):
+        if len(i)<LineLenght:
+            Line+=i+" "
+            LineLenght-=(len(i)+1)
+        elif len(i)==LineLenght:
+            Line+=i
+            outputList.append(Line)
+            Line=""
+            LineLenght=CharLength
+        elif len(i)>LineLenght:
+            outputList.append(Line)
+            LineLenght=CharLength-len(i)-1
+            Line=i+" "
+    outputList.append(Line)
+    return outputList
 
 def GetTop(members,page):
     base=Image.open('src/Images/Top.png')

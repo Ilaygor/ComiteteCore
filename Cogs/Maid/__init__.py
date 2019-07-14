@@ -19,6 +19,17 @@ class Maid(commands.Cog):
         await ctx.send(file=file)
         os.remove(path)
 
+    @commands.command(name="avatar", help="Выводит аватар пользователя. Можно сделать пинг (@Пользовтель) чтобы получить аватар другого пользователя.",usage="[@Пользователь]",brief="Аватар")
+    async def avatar(self,ctx,member=None):
+        if (member):
+            author=await commands.MemberConverter().convert(ctx,member)
+        else:
+            author=ctx.author
+
+        path=PictureCreator.GetAvatarFromUrl(author.avatar_url)
+        file=discord.File(path,filename="avatar.png")
+        await ctx.send("Avatar "+author.name,file=file)
+
     @commands.command(name="rank", help="Выводит ранг пользователя. Можно сделать пинг (@Пользовтель) чтобы получить информацию о ранге пользователя.",usage="[@Пользователь]",brief="Ранг")
     async def rank(self,ctx,member=None):
         if (member):

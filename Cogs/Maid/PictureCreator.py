@@ -85,7 +85,7 @@ def CreateProfile(member):
     lines=WrapText(text,width,fontsize)
     while fontsize>10:
         if fontsize*len(lines) > height:
-            fontsize-=1
+            fontsize-=2
             lines=WrapText(text,width,fontsize)
         else:
             break

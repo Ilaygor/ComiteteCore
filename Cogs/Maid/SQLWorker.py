@@ -22,8 +22,8 @@ def GetInfo(id):
 
 def GetTopMembers(page):
     users=5*page
-    return conn.cursor().execute("SELECT id,(Xp+MaxXP*Level) FROM Members Where IsAlive='1' ORDER BY Level DESC,MaxXP DESC,Xp DESC LIMIT ?,?",[0+users,5+users])
-
+    return conn.cursor().execute("SELECT id,level,Xp FROM Members Where IsAlive='1' ORDER BY Level DESC,MaxXP DESC,Xp DESC LIMIT ?,?",[0+users,5+users])
+    
 def GetTopMenMembers(page):
     users=5*page
     return conn.cursor().execute("SELECT id,Mentions FROM Members Where IsAlive='1' ORDER BY Mentions DESC LIMIT ?,?",[0+users,5+users])

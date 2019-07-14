@@ -8,13 +8,6 @@ class Maid(commands.Cog):
         self.bot = bot
         ExpSys.init()
 
-    @commands.command(name="clear",help="Чистит канал от сообщений бота. Требует пинг (#канал) и число последних сообщений.",usage="#Канал Число",brief="Чистка канала от бота")
-    async def clear(self,ctx,channel,count):
-        channel=await commands.TextChannelConverter().convert(ctx,channel)
-        async for i in channel.history(limit=int(count)):
-            if i.author.id==self.bot.user.id:
-                await i.delete()
-
     @commands.command(name="profile", help="Выводит профиль пользователя. Можно сделать пинг (@Пользовтель) чтобы получить информацию о профиле пользователя.",usage="[@Пользователь]",brief="Профиль")
     async def profile(self,ctx,member=None):
         if (member):
@@ -61,10 +54,10 @@ class Maid(commands.Cog):
     @commands.command(name="settext", help="Задаёт подпись профиля.",usage="[Информация]",brief="Информация пользователя")
     async def settext(self,ctx,*args):
         SQLWorker.SetInfo(ctx.author.id," ".join(args))
-        '''path=PictureCreator.CreateProfile(ctx.author)
+        path=PictureCreator.CreateProfile(ctx.author)
         file=discord.File(path,filename="profile.png")
         await ctx.send(file=file)
-        os.remove(path)'''
+        os.remove(path)
 
     @commands.command(name="top", help="Выводит рейтинг пользователя.\nТипы:\n> exp - выводит рейтинг пользователей основываясь на опыте получнном пользователями.\n> men - выводит рейтинг пользователей основываясь на количестве упоминаня пользователей.",usage="[Тип == exp]",brief="Рейтинг пользователей")
     async def top(self,ctx,cat:str="exp", page:int=1):
@@ -76,9 +69,15 @@ class Maid(commands.Cog):
 
         if cat == 'exp':
             for i in SQLWorker.GetTopMembers(page-1):
+                xp=i[2]
+                maxxp=50
+                for i1 in range(1,i[1]):
+                    xp+=maxxp
+                    maxxp*=1.5
+
                 members.append({
                     "mem":ctx.guild.get_member(i[0]),
-                    "data":PictureCreator.ConvrterToCI(round(i[1],2))+" xp"
+                    "data":PictureCreator.ConvrterToCI(round(xp,2))+" xp"
                 })
         elif cat=="men":
             for i in SQLWorker.GetTopMenMembers(page-1):

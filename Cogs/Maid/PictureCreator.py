@@ -65,7 +65,13 @@ def CreateProfile(member):
     
     AddText(member.top_role.name,(180,125),base,color=member.colour.to_rgb(),size=18)
     
-    xp=round(Info[0]*Info[2]+Info[1],1)
+    xp=Info[1]
+    maxxp=50
+    for i in range(1,Info[0]):
+        xp+=maxxp
+        maxxp*=1.5
+    xp=round(xp,1)
+    
     AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     
     AddText(str(SQLWorker.GetRank(member.id)).rjust(4,'0'),(431,190),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
@@ -130,6 +136,7 @@ def GetTop(members,page):
         del Avatar
 
         AddText(members[i]['mem'].name,(160, 15+height),base)
+        
         AddText(members[i]['data'],(160, 40+height),base,size=18)
         num=5*page+i+1
         position=(str(num)).rjust(3,'0')

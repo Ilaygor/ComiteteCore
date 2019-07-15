@@ -9,12 +9,13 @@ conn = sqlite3.connect("BotDB.db")
 UsersData={}
 
 def init():
-    for i in conn.cursor().execute("SELECT id,Xp,MaxXP,Level,Mentions FROM Members WHERE IsAlive=1"):
+    for i in conn.cursor().execute("SELECT id,Xp,MaxXP,Level,Mentions,TotalXP FROM Members WHERE IsAlive=1"):
         UsersData[i[0]]={
             'level':i[3],
             'xp':i[1],
             'maxxp':i[2],
-            'mentions':i[4]
+            'mentions':i[4],
+            'TotalXP':i[5]
         }
     return 'done'
 
@@ -29,12 +30,13 @@ async def levelUp(channel,id,level):
     os.remove(path) 
 
 def AddMem(id):
-    usr=conn.cursor().execute("SELECT xp,MaxXP,level,Mentions FROM Members WHERE id=?",[id]).fetchone()
+    usr=conn.cursor().execute("SELECT xp,MaxXP,level,Mentions,TotalXP FROM Members WHERE id=?",[id]).fetchone()
     UsersData[id]={
         'level':usr[2],
         'xp':usr[0],
         'maxxp':usr[1],
-        'mentions':usr[3]
+        'mentions':usr[3],
+        'TotalXP':usr[4]
     }
 
 def DelMem(id):
@@ -52,12 +54,13 @@ async def AddExp(id,count,channel):
     except KeyError:
         return
     user['xp']+=float(count)
+    user['TotalXP']+=float(count)
     await checkXp(user,id,channel)
 
 async def checkXp(user,id,channel):
     if (user['maxxp']>=user['xp']):
         cursor = conn.cursor()
-        cursor.execute("UPDATE Members SET Xp=?,MaxXP=?,Level=? WHERE id=?",[user['xp'],user['maxxp'],user['level'],id])
+        cursor.execute("UPDATE Members SET Xp=?,MaxXP=?,Level=?,TotalXp=? WHERE id=?",[user['xp'],user['maxxp'],user['level'],user['TotalXP'],id])
         conn.commit()
     else:
         user['xp']-=user['maxxp']

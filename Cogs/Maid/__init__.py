@@ -26,7 +26,7 @@ class Maid(commands.Cog):
         else:
             author=ctx.author
 
-        path=PictureCreator.GetAvatarFromUrl(author.avatar_url)
+        path=PictureCreator.GetAvatarFromUrl(author.avatar_url_as(size=4096))
         file=discord.File(path,filename="avatar.png")
         await ctx.send("Avatar "+author.name,file=file)
 
@@ -80,15 +80,9 @@ class Maid(commands.Cog):
 
         if cat == 'exp':
             for i in SQLWorker.GetTopMembers(page-1):
-                xp=i[2]
-                maxxp=50
-                for i1 in range(1,i[1]):
-                    xp+=maxxp
-                    maxxp*=1.5
-
                 members.append({
                     "mem":ctx.guild.get_member(i[0]),
-                    "data":PictureCreator.ConvrterToCI(round(xp,2))+" xp"
+                    "data":PictureCreator.ConvrterToCI(round(i[1],2))+" xp"
                 })
         elif cat=="men":
             for i in SQLWorker.GetTopMenMembers(page-1):

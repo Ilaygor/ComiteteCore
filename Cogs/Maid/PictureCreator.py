@@ -19,12 +19,23 @@ def CreateRank(member):
     Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
     base.paste(Avatar,(24,34))
     del Avatar
-    
-    AddText(member.name,(172, 37),base,size=20)
+
+    nik=member.name
+    if member.nick:
+        nik+=" AKA "+member.nick
+    fontsize=22
+    lines=WrapText(nik,340*1.5,fontsize)
+    while fontsize>12:
+        if len(lines) > 1:
+            fontsize-=2
+            lines=WrapText(nik,340*1.5,fontsize)
+        else:
+            break
+    AddText(lines[0],(172, 37),base,size=fontsize)
+
     AddText(str(Info[0]).rjust(3,'0')+"LV",(327,97),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     AddText(member.top_role.name,(180,62),base,color=member.colour.to_rgb(),size=18)
-    xp=round(Info[0]*Info[2]+Info[1],1)
-    AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,97),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
+    AddText("XP:"+ConvrterToCI(round(Info[4],2)).rjust(7,'0'),(173,97),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     if (Info[1]!=0):
         zero=2.16
         Re= Info[1]/(Info[2]/100)
@@ -51,7 +62,19 @@ def CreateProfile(member):
     Avatar = Image.open(GetAvatarFromUrl(member.avatar_url_as(size=128)))
     base.paste(Avatar,(24,94))
     del Avatar
-    AddText(member.name,(172, 97),base,size=20)
+
+    nik=member.name
+    if member.nick:
+        nik+=" AKA "+member.nick
+    fontsize=22
+    lines=WrapText(nik,340*1.5,fontsize)
+    while fontsize>12:
+        if len(lines) > 1:
+            fontsize-=2
+            lines=WrapText(nik,340*1.5,fontsize)
+        else:
+            break
+    AddText(nik,(172, 97),base,size=fontsize)
 
     AddText(str(Info[0]).rjust(3,'0')+"LV",(327,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
 
@@ -64,22 +87,16 @@ def CreateProfile(member):
 
     
     AddText(member.top_role.name,(180,125),base,color=member.colour.to_rgb(),size=18)
+
     
-    xp=Info[1]
-    maxxp=50
-    for i in range(1,Info[0]):
-        xp+=maxxp
-        maxxp*=1.5
-    xp=round(xp,1)
-    
-    AddText("XP:"+ConvrterToCI(xp).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
+    AddText("XP:"+ConvrterToCI(round(Info[4],2)).rjust(7,'0'),(173,161),base,color=(255,90,0),size=18,font="BONX-TubeBold.otf")
     
     AddText(str(SQLWorker.GetRank(member.id)).rjust(4,'0'),(431,190),base,color=(255,90,0),size=24,font="BONX-TubeBold.otf")
     
     
     text=SQLWorker.GetInfo(member.id)
 
-    fontsize=18
+    fontsize=22
     height=138
     width=500
     lines=WrapText(text,width,fontsize)
@@ -89,8 +106,8 @@ def CreateProfile(member):
             lines=WrapText(text,width,fontsize)
         else:
             break
+
     offset=0
-    
     for i in lines:
         if (offset+1)*fontsize < height:
             AddText(i,(175,240+offset*fontsize),base,color=(255,255,255),size=fontsize,font='ariblk.ttf')
@@ -135,7 +152,18 @@ def GetTop(members,page):
         base.paste(Avatar,(80,9+height))
         del Avatar
 
-        AddText(members[i]['mem'].name,(160, 15+height),base)
+        nik=members[i]['mem'].name
+        if members[i]['mem'].nick:
+            nik+=" AKA "+members[i]['mem'].nick
+        fontsize=20
+        lines=WrapText(nik,340*1.5,fontsize)
+        while fontsize>12:
+            if len(lines) > 1:
+                fontsize-=2
+                lines=WrapText(nik,340*1.5,fontsize)
+            else:
+                break
+        AddText(nik,(160, 15+height),base,size=fontsize)
         
         AddText(members[i]['data'],(160, 40+height),base,size=18)
         num=5*page+i+1

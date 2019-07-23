@@ -3,11 +3,21 @@ import os
 from datetime import datetime
 
 conn = sqlite3.connect("BotDB.db")
-role = sqlite3.connect("Cogs/Roler/RoleList.db")
+role = sqlite3.connect("Cogs/GuildMaster/RoleList.db")
 
 def SetInfoChan(serverid,channelid):
     cursor = conn.cursor()
     cursor.execute("UPDATE Servers SET infoChan=? WHERE id=?",[channelid,serverid])
+    conn.commit()
+
+def SetMemName(serverid,name):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE Servers SET MemName=? WHERE id=?",[name,serverid])
+    conn.commit()
+
+def SetBanText(serverid,text):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE Servers SET BanText=? WHERE id=?",[text,serverid])
     conn.commit()
 
 def AddIgnorList(channelID,serverid):
@@ -26,14 +36,14 @@ def GetIgnorList(serverid):
 def GetMembers(serverid): 
     return conn.cursor().execute("SELECT id,IsAlive FROM Members WHERE ServerID=?",[serverid])
 
-def SetAlive(memberid):
+def SetAlive(memberid,serverid):
     cursor = conn.cursor()
-    cursor.execute("UPDATE Members SET IsAlive=1 WHERE id=?",[memberid])
+    cursor.execute("UPDATE Members SET IsAlive=1 WHERE id=? and ServerID=?",[memberid,serverid])
     conn.commit()
 
-def SetDead(memberid):
+def SetDead(memberid,serverid):
     cursor = conn.cursor()
-    cursor.execute("UPDATE Members SET IsAlive=0 WHERE id=?",[memberid])
+    cursor.execute("UPDATE Members SET IsAlive=0 WHERE id=? and ServerID=?",[memberid,serverid])
     conn.commit()
 
 def AddNewmem(serverid,id):
@@ -54,3 +64,20 @@ def DelRole(RoleId):
     cursor = role.cursor()
     cursor.execute("DELETE FROM RoleList WHERE RoleId=?",[RoleId])
     role.commit()
+
+def AddEmoji(ServerID,EmojiID):
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Emojies (EmojiID,ServerID) VALUES ({},{})".format(EmojiID,ServerID))
+    conn.commit()
+
+def CheckEmoji(ServerID,EmojiID):
+    return conn.cursor().execute("SELECT count(EmojiID) FROM Emojies WHERE ServerID ={} and EmojiID={}".format(ServerID,EmojiID)).fetchone()[0]>=1
+
+
+def CheckServer(ServerID):
+    return conn.cursor().execute("SELECT count(id) FROM Servers WHERE id ={}".format(ServerID)).fetchone()[0]>=1
+
+def AddServer(ServerID):
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Servers (id) VALUES ({})".format(ServerID))
+    conn.commit()

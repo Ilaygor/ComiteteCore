@@ -15,8 +15,7 @@ class Memes(commands.Cog):
         if os.path.exists('src/Images/memes/{}.json'.format(memname)):
             typeMem=json.loads(open('src/Images/memes/{}.json'.format(memname)).read())['type']
             if (typeMem=='onetext'):
-                text=' '.join(args)
-                path=mem.CreateMem(memname,text)
+                path=mem.CreateMem(memname,' '.join(args))
 
             elif(typeMem=='image'):
                 if len(args)>=1:

@@ -24,19 +24,23 @@ class Settings(commands.Cog):
                 if memlist[mem.id]==1:
                     memlist.pop(mem.id)
                 else:
-                    SQLWorker.SetAlive(mem.id)
+                    SQLWorker.SetAlive(mem.id,ctx.guild.id)
             else:
                 SQLWorker.AddNewmem(ctx.guild.id,mem.id)
 
         for mem in memlist.keys():
             if memlist[mem]==1:
-                SQLWorker.SetDead(mem)
+                SQLWorker.SetDead(mem,ctx.guild.id)
         
 
         for mem in ctx.guild.members:
             for role in mem.roles:
                 if not SQLWorker.CheckRole(ctx.guild.id,mem.id,role.id) and not role.is_default():
                     SQLWorker.AddRoles(ctx.guild.id,mem.id,role.id)                    
+
+        for emoji in ctx.guild.emojis:
+            if not SQLWorker.CheckEmoji(ctx.guild.id,emoji.id):
+                SQLWorker.AddEmoji(ctx.guild.id,emoji.id)
 
         await ctx.send("Audit completed!")
        
@@ -46,9 +50,24 @@ class Settings(commands.Cog):
     async def setinfo(self,ctx,channel):
         ch=await TextChannelConverter().convert(ctx,channel)
         SQLWorker.SetInfoChan(ctx.guild.id,ch.id)
-        await ctx.send("InfoChan changed for {}".format(channel))
+        await ctx.send("InfoChan changed for: {}".format(channel))
 
-    @commands.command(name="ignor" , help="Игнор-лист, для того чтобы бот не защитывал XP или упоминания в каналах админа сервера.\nНапример добавьте в игнор-лист каналы в которых предназначенные для флуда или каналы предназначенные для ботов.\nДействия:\n> list - выводит список игнорируемых каналов.\n> add - добавляет канал в список игнорируемых каналов, требует пинг канала.\n> rem - девушка с голубыми волосами, близнец ram... Не та Информация, т.е. данное действие отвечает за удаление канала из игнор листа, требует пинг канала.",usage="[Действие == list] [Канал]",brief="Игнор-лист")
+    @commands.command(name="setmemname", help="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.",usage="[Строка обозначающее имя участника канала == Member]",brief="Устанавливает имя участника сервера")
+    @is_owner()
+    async def setmemname(self,ctx,name="Member"):
+        SQLWorker.SetMemName(ctx.guild.id,name)
+        await ctx.send("Member name changed for: {}".format(name))
+    
+    @commands.command(name="setbantext", help="Устанавливает текст при бане пользователя на сервере.",usage="[Сроки обозначающие, что пользовтатель был забанен == has been banned.]",brief="Устанавливает текст при бане пользователя на сервере.")
+    @is_owner()
+    async def setbantext(self,ctx,*args):
+        text=' '.join(args)
+        if len (text)==0:
+            text = 'has been banned.'
+        SQLWorker.SetBanText(ctx.guild.id,text)
+        await ctx.send("Ban text changed for: {}".format(text))
+
+    @commands.command(name="ignor" , help="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах админа сервера.\nНапример добавьте в игнор-лист каналы в которых предназначенные для флуда или каналы предназначенные для ботов.\nДействия:\n> list - выводит список игнорируемых каналов.\n> add - добавляет канал в список игнорируемых каналов, требует пинг канала.\n> rem - девушка с голубыми волосами, близнец ram... Не та Информация, т.е. данное действие отвечает за удаление канала из игнор листа, требует пинг канала.",usage="[Действие == list] [Канал]",brief="Игнор-лист")
     @is_owner()
     async def ignor(self,ctx,action:str="list", channel=None):
         if action=="list":
@@ -83,6 +102,40 @@ class Settings(commands.Cog):
                 await ctx.send("Не указан канал!")
         else:
             await ctx.send("Неизвестное действие.")
+
+    @commands.Cog.listener()
+    async def on_guild_join(self,guild):
+        if not SQLWorker.CheckServer(guild.id):
+            import os
+            os.mkdir("src/Images/Usr/"+str(guild.id))
+            SQLWorker.AddServer(guild.id)
+            for mem in guild.members:
+                SQLWorker.AddNewmem(guild.id,mem.id)
+        else:
+            memlist={}
+            for mem in SQLWorker.GetMembers(guild.id):
+                memlist.update({mem[0]:mem[1]})
+            for mem in guild.members:
+                if memlist.get(mem.id):
+                    if memlist[mem.id]==1:
+                        memlist.pop(mem.id)
+                    else:
+                        SQLWorker.SetAlive(mem.id,guild.id)
+                else:
+                    SQLWorker.AddNewmem(guild.id,mem.id)
+            for mem in memlist.keys():
+                if memlist[mem]==1:
+                    SQLWorker.SetDead(mem,guild.id)
+        
+        for mem in guild.members:
+            for role in mem.roles:
+                if not SQLWorker.CheckRole(guild.id,mem.id,role.id) and not role.is_default():
+                    SQLWorker.AddRoles(guild.id,mem.id,role.id)                    
+
+        for emoji in guild.emojis:
+            if not SQLWorker.CheckEmoji(guild.id,emoji.id):
+                SQLWorker.AddEmoji(guild.id,emoji.id)
+
 
 def setup(client):
     client.add_cog(Settings(client))

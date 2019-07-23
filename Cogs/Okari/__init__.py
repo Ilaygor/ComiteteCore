@@ -23,7 +23,7 @@ class Okari(commands.Cog):
             file=discord.File(path,filename="MemJoin.png")
             await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
             os.remove(path)
-
+            
     @commands.Cog.listener()
     async def on_member_remove(self,member):
         try:
@@ -40,11 +40,11 @@ class Okari(commands.Cog):
         if not mem.bot:
             reason =await guild.fetch_ban(mem)
             if (reason[0]):
-                embed=discord.Embed(title=mem.name+" убит портовой мафией!")
+                embed=discord.Embed(title=mem.name+" "+SQLWorker.GetBanText(guild.id))
                 embed.add_field(name="Причина:", value=reason[0], inline=False)
                 await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
             else:
-                embed=discord.Embed(title=mem.name+" убит портовой мафией!")
+                embed=discord.Embed(title=mem.name+" "+SQLWorker.GetBanText(guild.id))
                 embed.add_field(name="Причина:", value="Отсутсвует", inline=False)
                 await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
 

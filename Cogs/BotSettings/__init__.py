@@ -1,5 +1,5 @@
 import discord
-from discord.ext.commands import TextChannelConverter
+from discord.ext.commands import TextChannelConverter,RoleConverter
 from discord.ext import commands
 from . import SQLWorker
 from datetime import datetime
@@ -52,6 +52,17 @@ class Settings(commands.Cog):
         SQLWorker.SetInfoChan(ctx.guild.id,ch.id)
         await ctx.send("InfoChan changed for: {}".format(channel))
 
+    @commands.command(name="setjoinrole", help="Задаёт роль для пользовтелей который только-что присоединились.",usage="Название роли",brief="Устанавливает роль для новичков")
+    @is_owner()
+    async def setjoinrole(self,ctx,rolename=None):
+        if rolename:
+            role=await RoleConverter().convert(ctx,rolename)
+            SQLWorker.SetJoinRole(ctx.guild.id,role.id)
+            await ctx.send("Join role changed for: {}".format(rolename))
+        else:
+            SQLWorker.SetJoinRole(ctx.guild.id,rolename)
+            await ctx.send("Join role cleared")
+
     @commands.command(name="setmemname", help="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.",usage="[Строка обозначающее имя участника канала == Member]",brief="Устанавливает имя участника сервера")
     @is_owner()
     async def setmemname(self,ctx,name="Member"):
@@ -74,7 +85,11 @@ class Settings(commands.Cog):
             IgnorList=SQLWorker.GetIgnorList(ctx.guild.id)
             embed=discord.Embed(title="Cписок игнорируемых каналов:", description="Каналы в которых бот не учитывает XP.")
             for i in IgnorList:
-                embed.add_field(name=ctx.guild.get_channel(i[0]).name,inline=False,value="Добавлен: "+str(datetime.fromtimestamp(i[1]).date()))
+                channel=ctx.guild.get_channel(i[0])
+                if channel:
+                    embed.add_field(name=channel.name,inline=False,value="Добавлен: "+str(datetime.fromtimestamp(i[1]).date()))
+                else:
+                    SQLWorker.DelIgnorList(i[0],ctx.guild.id)
             await ctx.send(embed=embed)
         elif action == "add":
             if channel:

@@ -15,6 +15,12 @@ def SetMemName(serverid,name):
     cursor.execute("UPDATE Servers SET MemName=? WHERE id=?",[name,serverid])
     conn.commit()
 
+def SetJoinRole(serverid,roleid):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE Servers SET JoinRole=? WHERE id=?",[roleid,serverid])
+    conn.commit()
+
+
 def SetBanText(serverid,text):
     cursor = conn.cursor()
     cursor.execute("UPDATE Servers SET BanText=? WHERE id=?",[text,serverid])

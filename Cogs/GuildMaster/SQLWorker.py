@@ -27,3 +27,6 @@ def DelEmoji(EmojiID):
     bot.commit()
 def CheckEmoji(ServerID,EmojiID):
     return bot.cursor().execute("SELECT count(EmojiID) FROM Emojies WHERE ServerID ={} and EmojiID={}".format(ServerID,EmojiID)).fetchone()[0]>=1
+
+def GetJoinRole(ServerID):
+    return bot.cursor().execute("SELECT JoinRole FROM Servers WHERE id=?",[ServerID]).fetchone()[0]

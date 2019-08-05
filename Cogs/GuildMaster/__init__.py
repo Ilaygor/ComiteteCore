@@ -9,7 +9,11 @@ class GuildMaster(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self,member):
-        if not member.bot:        
+        if not member.bot:
+            jr= SQLWorker.GetJoinRole(member.guild.id)
+            if jr:
+                await member.add_roles(member.guild.get_role(int(jr)))
+
             for i in SQLWorker.GetRoles(member.guild.id,member.id):
                 await member.add_roles(member.guild.get_role(int(i[0])))
 

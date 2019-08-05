@@ -8,8 +8,18 @@ from . import Memes_name_subject_to_change as mem
 class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    @commands.command(name="memlist", help="Выводит список мемов.",usage="",brief="Выводит список мемов")
+    async def memlist(self,ctx):
+        embed=discord.Embed(title="Cписок мемов:", description="Мемы которые может сгенерировать бот.")
+        for file in os.listdir('src/Images/memes'):
+            if file.endswith("json"):
+                descript=open('src/Images/memes/{}'.format(file), encoding="utf-8", errors='ignore').read()
+                print(descript)
+                embed.add_field(name=file.split('.')[0] ,inline=False,
+                value=json.loads(descript)['description'])
+        await ctx.send(embed=embed)
 
-    @commands.command(name="memes", help="Генерирует мем.\nМемы:\n> ahshit - мем про cj, требует ссылку на изображение в Данные_мема или приложеное изображение.\n> sayher - мем про парня и девушку, требует любой текст в Данные_мема.\n> tobe - jojo мем to be continued, требует ссылку на изображение в Данные_мема или приложеное изображение.",usage="Мем Данные_мема",brief="Мемген")
+    @commands.command(name="memes", help="Генерирует мем. Более подробно о мемах можно узнать коммандой NM!memlist ",usage="Мем Данные_мема",brief="Мемген")
     async def memes(self,ctx,memname=None,*args):
         #await ctx.message.delete()
         if os.path.exists('src/Images/memes/{}.json'.format(memname)):

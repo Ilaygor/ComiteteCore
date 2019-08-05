@@ -1,0 +1,13 @@
+{
+    "type":"onetext",
+    "x":165,
+    "y":350, 
+    "placewidth":325, 
+    "placeheight":140, 
+    "font-size":22,
+    "rotate":7,
+    "filename":"cmm.jpg",
+    "textcolor":"#000",
+    "font":"ariblk.ttf",
+    "description":"Мем про 'Change my mind' или по русски 'Попробуй переубеди', требует ввести любой текст"
+}

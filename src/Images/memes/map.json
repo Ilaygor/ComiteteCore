@@ -1,0 +1,12 @@
+{
+    "type":"onetext",
+    "x":530,
+    "y":650, 
+    "placewidth":300, 
+    "placeheight":50, 
+    "font-size":20,
+    "filename":"map.jpg",
+    "textcolor":"#fff",
+    "font":"ariblk.ttf",
+    "description":"Мем про пустоту и одиночество на примере глобальной карты, требует ввести любой текст"
+}

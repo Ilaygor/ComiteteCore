@@ -3,6 +3,11 @@ from discord.ext import commands
 import datetime
 from . import SQLWorker
 
+def is_owner():
+    async def predicate(ctx):
+        return ctx.author.id == ctx.guild.owner_id or ctx.author.id == 269860812355665921
+    return commands.check(predicate)
+
 class GuildMaster(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -45,6 +50,23 @@ class GuildMaster(commands.Cog):
                 embed.add_field(name="Роль не найдена и удалена из БД", inline=True, value=str(i[0]))
                 SQLWorker.DelRole(i[0])
         await ctx.send(embed=embed)
+
+    @commands.command(name="emojistat", help="Выводит статистику использования серверных эмоджи.",usage="",brief="Выводит статистику использования серверных эмоджи.")
+    @is_owner()
+    async def emojistat(self,ctx):
+       
+        emojies={}
+        for i in ctx.guild.emojis:
+            emojies.update({i.id:i})
+
+        for i in SQLWorker.GetAllEmojie(ctx.guild.id):
+            emoji=emojies.get(i[1])
+            if emoji:
+                embed=discord.Embed(title=emoji.name)
+                embed.set_thumbnail(url=emoji.url)
+                embed.add_field(name="Кол-во:", value=i[2], inline=True)
+                embed.add_field(name="Последнее использование:", value=str(datetime.datetime.fromtimestamp(i[3])), inline=True)
+                await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_update(self,before,after):

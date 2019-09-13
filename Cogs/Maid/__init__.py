@@ -44,9 +44,10 @@ class Maid(commands.Cog):
                 mem=ctx.guild.get_member(i[0])
                 members.append({
                     "mem":mem,
-                    "url":mem.avatar_url_as(size=64),
-                    "data":PictureCreator.ConvrterToCI(round(i[1],2))+" xp"
+                    "data":PictureCreator.ConvrterToCI(round(i[1],2))+" xp",
+                    "url":mem.avatar_url_as(size=64)
                 })
+
         elif cat=="men":
             for i in SQLWorker.GetTopMenMembers(page-1,ctx.guild.id):
                 mem=ctx.guild.get_member(i[0])

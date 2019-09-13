@@ -1,5 +1,6 @@
 import sqlite3
 import discord
+
 from discord import File
 import os
 from . import PictureCreator
@@ -45,6 +46,7 @@ def DelMem(id,ServerID):
 def AddMention(id,ServerID):
     UsersData[ServerID,id]['mentions']+=1
     cursor = conn.cursor()
+    
     cursor.execute("UPDATE Members SET Mentions=? WHERE id=? and ServerID=?",[UsersData[ServerID,id]['mentions'],id,ServerID])
     conn.commit()
 

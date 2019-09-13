@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 
 conn = sqlite3.connect("BotDB.db")
 
@@ -31,9 +32,10 @@ def GetTopEmojiMembers(page,serverID):
 def IncEmoji(ServerID,EmojiID):
     if CheckEmoji(ServerID,EmojiID):
         cursor = conn.cursor()
+        time=int(str(datetime.datetime.now().timestamp()).split('.')[0])
         count = cursor.execute("SELECT Count FROM Emojies WHERE ServerID ={} and EmojiID={}".format(ServerID,EmojiID)).fetchone()[0]
         count+=1
-        cursor.execute("UPDATE Emojies SET Count={} WHERE ServerID ={} and EmojiID={}".format(count,ServerID,EmojiID))
+        cursor.execute("UPDATE Emojies SET Count={},LastUsage={} WHERE ServerID ={} and EmojiID={}".format(count,time,ServerID,EmojiID))
         conn.commit()
 
 def CheckEmoji(ServerID,EmojiID):

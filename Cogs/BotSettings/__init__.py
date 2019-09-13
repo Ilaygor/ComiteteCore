@@ -12,6 +12,7 @@ def is_owner():
 class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    
     @commands.command(name="audit",help="Производит аудит пользователей сервера, т.е. смотрит какие пользователи присутсвуют, а какие отсутсвуют и производит учёт.\n Полезно, когда пришёл новый пользователь, а бот был в отключке.",usage="",brief="Аудит сервера")
     @is_owner()
     async def audit(self,ctx):

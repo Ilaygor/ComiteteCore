@@ -51,10 +51,62 @@ class GuildMaster(commands.Cog):
                 SQLWorker.DelRole(i[0])
         await ctx.send(embed=embed)
 
+    @commands.command(name="tocolor", brief="Переключает существующую роль в цветную.",usage="[имя или пинг или id роли]",help="Переключает существующую роль в цветную. Требует ввести Имя или Пинг или id роли. Можно ввести несколько.")
+    @is_owner()
+    async def tocolor(self,ctx,*name):
+        for i in name:
+            try:
+                role=await commands.RoleConverter().convert(ctx,i)
+            except commands.errors.BadArgument:
+                await ctx.send("Роль {} не найдена!".format(i))
+                pass
+            SQLWorker.CreateColorRole(ctx.guild.id,role.id)
+            await ctx.send("Теперь роль {} - цветная!".format(role))
+    @commands.command(name="tosimple", brief="Переключает существующую роль в обычную.",usage="[имя или пинг или id роли]",help="Переключает существующую роль в обычную. Требует ввести Имя или Пинг или id роли. Можно ввести несколько.")
+    @is_owner()
+    async def tosimple(self,ctx,*name):
+        for i in name:
+            try:
+                role=await commands.RoleConverter().convert(ctx,i)
+            except commands.errors.BadArgument:
+                await ctx.send("Роль {} не найдена!".format(i))
+                pass
+            SQLWorker.DeleteColorRole(ctx.guild.id,role.id)
+            await ctx.send("Теперь роль {} - обычная!".format(role))
+    @commands.command(name="changecolor", brief="Изменяет цвет цветной роли.",usage="[имя или пинг или id роли] [цвет]",help="Изменяеи цвеи цветной роли. Требует ввести Имя или Пинг или id роли, а также цвет роли в HEX (#99AAB5), чтобы изменить цвет роли.")
+    async def changecolor(self,ctx,name,color):
+        try:
+            role=await commands.RoleConverter().convert(ctx,name)
+        except commands.errors.BadArgument:
+            await ctx.send("Роль {} не найдена!".format(name))
+            return
+
+        if role in ctx.author.roles:
+            if SQLWorker.IsColorRole(ctx.guild.id,role.id):
+                colored=await commands.ColourConverter().convert(ctx,color)
+                await role.edit(colour=colored)
+                await ctx.send("Цвет роли {} успешно изменён".format(role))
+            else:
+                await ctx.send("Цвет роли {} нельзя изменить т.к. это не цветная роль.".format(role)) 
+        else:
+            await ctx.send("Роль {} не принадлежит вам!".format(role))
+        
+    @commands.command(name="mycolors", brief="Выводит список ролей цвет которых вы можете изменить.",usage="",help="Выводит список ролей цвет которых вы можете изменить.")
+    async def mycolors(self,ctx):
+        embed=discord.Embed(title="Cписок ролей:", description="Роли пользователя {}, цвет которых можно изменить.".format(ctx.author.name),color=ctx.author.color)
+        for i in ctx.author.roles:
+            if SQLWorker.IsColorRole(ctx.guild.id,i.id):
+                embed.add_field(name=i.name, inline=False, value=i.color)
+        await ctx.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self,role):
+        if SQLWorker.IsColorRole(role.guild.id,role.id):
+            SQLWorker.DeleteColorRole(role.guild.id,role.id)
+
     @commands.command(name="emojistat", help="Выводит статистику использования серверных эмоджи.",usage="",brief="Выводит статистику использования серверных эмоджи.")
     @is_owner()
     async def emojistat(self,ctx):
-       
         emojies={}
         for i in ctx.guild.emojis:
             emojies.update({i.id:i})

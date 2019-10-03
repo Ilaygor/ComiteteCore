@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 conn = sqlite3.connect("BotDB.db")
-role = sqlite3.connect("Cogs/GuildMaster/RoleList.db")
+role = sqlite3.connect("Cogs/GuildMaster (Admin Module)/RoleList.db")
 
 def SetInfoChan(serverid,channelid):
     cursor = conn.cursor()

@@ -3,3 +3,4 @@ AquariusDBOLD.db
 AquariusDBOLD*
 Aquarius.py*
 __pycache__
+*.db

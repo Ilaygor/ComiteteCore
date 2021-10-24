@@ -1,58 +1,117 @@
 import discord
 from discord.ext import commands
 import os
-from . import SQLWorker
-from . import PictureCreator
+import SQLWorker
+import PictureCreator
+
+
+
+def not_bot(member):
+    async def predicate(member):
+        return not member.bot
+
+    return commands.check(predicate)
+
+
+def not_botGuild(member):
+    async def predicate(guild, member):
+        return not member.bot
+
+    return commands.check(predicate)
+
+
+
+
+
 
 class Okari(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="count", help="Выводит статистику посещения сервера, а именно сколько пришло, сколько осталось и сколько ушло человек.",brief="Cтатистика посещения сервера")
-    async def count(self,ctx):
-        stat=SQLWorker.GetStat(ctx.guild.id)
-        embed=discord.Embed(title="Я запомнил "+str(stat[0])+" чел.", description="На данный момент")
-        embed.add_field(name="Ушло", value=str(stat[1])+" чел.")
-        embed.add_field(name="Осталось", value=str(stat[2])+" чел." )
-        await ctx.send(embed=embed)
+    # Пользователь присоединился
+    @not_bot
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        path = "Temp/{0}.png".format(member.id)
+        if SQLWorker.CheckMember(member.guild.id, member.id):
+            SQLWorker.SetAlive(member.guild.id, member.id)
+            PictureCreator.CreatWelcomeMessage(member.avatar_url_as(size=128),
+                                               member.name,
+                                               SQLWorker.GetMemName(member.guild.id)) \
+                .save(path, format="png")
+        else:
+            SQLWorker.AddNewMem(member.guild.id, member.id)
+            PictureCreator.CreateFirstWelcomeMessage(member.avatar_url_as(size=128), member.name,
+                                                     SQLWorker.GetMemName(member.guild.id)) \
+                .save(path, format="png")
+
+        file = discord.File(path, filename="MemJoin.png")
+        await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
+        os.remove(path)
+
+        joinRole = SQLWorker.GetJoinRole(member.guild.id)
+        if joinRole:
+            await member.add_roles(member.guild.get_role(int(joinRole)))
+
+        for i in SQLWorker.GetRoles(member.guild.id, member.id):
+            try:
+                await member.add_roles(member.guild.get_role(int(i[0])))
+            except AttributeError:
+                SQLWorker.DelRole(i[0])
+            except discord.errors.Forbidden:
+                pass
 
     @commands.Cog.listener()
-    async def on_member_join(self,member):
-        if not member.bot:        
-            path=PictureCreator.AddMember(member)
-            file=discord.File(path,filename="MemJoin.png")
-            await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
-            os.remove(path)
-            
+    async def on_member_update(self, before, after):
+        if len(before.roles) < len(after.roles):
+            for i in after.roles:
+                if i not in before.roles and not SQLWorker.CheckRole(after.guild.id, after.id, i.id):
+                    SQLWorker.AddRoles(after.guild.id, after.id, i.id)
+        if len(before.roles) > len(after.roles):
+            for i in before.roles:
+                if i not in after.roles:
+                    SQLWorker.DelRole(i.id)
+
     @commands.Cog.listener()
-    async def on_member_remove(self,member):
+    async def on_guild_emojis_update(self, guild, before, after):
+        if len(before) < len(after):
+            for i in after:
+                if i not in before and not SQLWorker.CheckEmoji(guild.id, i.id):
+                    SQLWorker.AddEmoji(guild.id, i.id)
+        if len(before) > len(after):
+            for i in before:
+                if i not in after:
+                    SQLWorker.DelEmoji(i.id)
+
+    # Пользователь покинул сервер
+    @not_bot
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
         try:
             await member.guild.fetch_ban(member)
         except discord.NotFound:
-            if not member.bot:
-                path=PictureCreator.LostMember(member)
-                file=discord.File(path,filename="MemRemove.png")
-                await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
-                os.remove(path)
+            path = "Temp/{0}.png".format(member.id)
+            PictureCreator.CreateLostMessage(member.avatar_url_as(size=128),
+                                             member.name,
+                                             member.top_role,
+                                             SQLWorker.GetMemName(member.guild.id)) \
+                .save(path, format="png")
+            SQLWorker.SetDead(member.guild.id, member.id)
+            file = discord.File(path, filename="MemRemove.png")
+            await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
+            os.remove(path)
 
+    # Пользователя забанили
+    @not_botGuild
     @commands.Cog.listener()
-    async def on_member_ban(self,guild,mem):
-        if not mem.bot:
-            reason =await guild.fetch_ban(mem)
-            if (reason[0]):
-                embed=discord.Embed(title=mem.name+" "+SQLWorker.GetBanText(guild.id))
-                embed.add_field(name="Причина:", value=reason[0], inline=False)
-                await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
-            else:
-                embed=discord.Embed(title=mem.name+" "+SQLWorker.GetBanText(guild.id))
-                embed.add_field(name="Причина:", value="Отсутсвует", inline=False)
-                await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
+    async def on_member_ban(self, guild, mem):
+        reason = await guild.fetch_ban(mem)
+        embed = discord.Embed(title=mem.name + " " + SQLWorker.GetBanText(guild.id))
+        embed.add_field(name="Причина:",
+                        value=(reason[0] if reason[0] else "Отсутсвует"),
+                        inline=False)
+        await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_member_unban(self,guild,mem):
-        if not mem.bot:
-            embed=discord.Embed(title=mem.name+" воскресе!")
-            await guild.get_channel(SQLWorker.GetInfoChan(guild.id)).send(embed=embed)
 
 def setup(client):
     client.add_cog(Okari(client))

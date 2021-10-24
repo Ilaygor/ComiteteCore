@@ -1,23 +1,34 @@
-from discord.ext import commands
 import discord
-import os;
+from discord.ext import commands
+import os
+import logging
+from discord_slash import SlashCommand
 
 
-client = commands.Bot(command_prefix='NM!', description='Сomitete System')
+logging.basicConfig(filename="Bot.log", level=logging.INFO)
+
+intents = discord.Intents.default()
+intents.members = True
+
+client = commands.Bot(command_prefix='!', description='Amadeus Kurisu', intents=intents)
+slash = SlashCommand(client, sync_commands=True, )
+
 
 @client.event
 async def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print("-------------------------\n")
+    logging.info('Logged in as')
+    logging.info(client.user.name)
+    logging.info(client.user.id)
+    logging.info("-------------------------\n")
+
 
 if __name__ == '__main__':
-    for extention in os.listdir("Cogs"):
+    for cog in os.listdir("Cogs"):
         try:
-            client.load_extension(".".join(["Cogs",extention]))
-            print("{} - DONE".format(extention))
+            client.load_extension(".".join(["Cogs", cog]))
+            logging.info("{} - DONE".format(cog))
         except Exception as error:
-            print ("{} - ERROR [{}]".format(extention,error))
-    print("-------------------------\n")  
-    client.run(open('AccessToken','r').read())
+            logging.error("{} - ERROR [{}]".format(cog, error))
+    logging.info("-------------------------\n")
+
+    client.run(open('AccessToken', 'r').read())

@@ -49,7 +49,7 @@ class Admin(commands.Cog):
         self.init()
         self.muteTask.start()
         self.votumTask.start()
-        print(muteList)
+
     def init(self):
         for i in SQLWorker.GetMuteMembers():
             muteList[i[0], i[1]] = {

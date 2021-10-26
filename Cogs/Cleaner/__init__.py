@@ -32,6 +32,7 @@ class Cleaner(commands.Cog):
         async for i in channel.history(limit=int(count)):
             if i.author.id == self.bot.user.id:
                 await i.delete()
+        return await ctx.send("Чат очищен успешно")
 
 
 def setup(client):

@@ -24,7 +24,6 @@ def init():
 
 def AddMem(memberId, serverId):
     usr = SQLWorker.GetMemInfo(memberId, serverId)
-
     UsersData[serverId, memberId] = {
         'level': usr[2],
         'xp': usr[0],

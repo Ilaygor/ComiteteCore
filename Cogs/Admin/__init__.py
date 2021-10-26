@@ -68,7 +68,7 @@ class Admin(commands.Cog):
                 'ChannelId': i[4]
             }
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=60, reconnect=True)
     async def muteTask(self):
         for i in muteList:
             if datetime.datetime.utcnow() >= datetime.datetime.strptime(muteList[i]['endTime'], '%Y-%m-%d %H:%M:%S.%f'):
@@ -80,7 +80,7 @@ class Admin(commands.Cog):
                     pass
                 SQLWorker.DelMute(muteList[i]['userId'], muteList[i]['serverId'])
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=60, reconnect=True)
     async def votumTask(self):
         for i in votumList:
             if datetime.datetime.utcnow() >= \

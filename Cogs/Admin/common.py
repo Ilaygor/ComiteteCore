@@ -1,4 +1,5 @@
 import SQLWorker
+from Cogs.Profile import XpSys
 
 
 def createServerFolder(guild):
@@ -13,6 +14,7 @@ def addMembersOnServer(guild):
     for member in guild.members:
         if not member.bot:
             SQLWorker.AddNewMem(guild.id, member.id)
+            XpSys.AddMem(member.id, guild.id)
 
 
 def checkMembersOnServer(guild):

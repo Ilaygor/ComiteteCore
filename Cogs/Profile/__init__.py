@@ -248,14 +248,10 @@ class Profile(commands.Cog):
                     pass
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
-        for mem in guild.members:
-            XpSys.AddMem(mem.id, guild.id)
-
-    @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         for mem in guild.members:
-            XpSys.DelMem(mem.id, guild.id)
+            if not mem.bot:
+                XpSys.DelMem(mem.id, guild.id)
 
 
 def setup(client):

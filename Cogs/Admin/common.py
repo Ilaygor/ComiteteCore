@@ -39,6 +39,7 @@ def addEmojies(guild):
         if not SQLWorker.CheckEmoji(guild.id, emoji.id):
             SQLWorker.AddEmoji(guild.id, emoji.id)
 
+
 def addRoles(guild):
     for mem in guild.members:
         for role in mem.roles:

@@ -27,9 +27,7 @@ class Cleaner(commands.Cog):
         ]
     )
     async def clear(self, ctx, channel=None, count=100):
-        if channel:
-            channel = await commands.TextChannelConverter().convert(ctx, channel)
-        else:
+        if not channel:
             channel = ctx.channel
         async for i in channel.history(limit=int(count)):
             if i.author.id == self.bot.user.id:

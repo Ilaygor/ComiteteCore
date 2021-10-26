@@ -11,8 +11,7 @@ intents = discord.Intents.default()
 intents.members = True
 
 client = commands.Bot(command_prefix='!', description='Amadeus Kurisu', intents=intents)
-slash = SlashCommand(client, sync_commands=True, )
-
+slash = SlashCommand(client, sync_commands=True, sync_on_cog_reload=True)
 
 @client.event
 async def on_ready():

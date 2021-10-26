@@ -45,7 +45,7 @@ class Profile(commands.Cog):
         os.remove(path)
 
     @cog_ext.cog_slash(
-        name='setbg',
+        name='setBg',
         description="Устанавливает задний фон для профиля. Приложить изображение или ссылку на изображение.",
         options=[
             create_option(
@@ -56,7 +56,7 @@ class Profile(commands.Cog):
             )
         ]
     )
-    async def setBg(self, ctx: SlashContext, url=None):
+    async def setBg(self, ctx: SlashContext, url: str = None):
         if url:
             try:
                 urlToPic = url
@@ -68,7 +68,7 @@ class Profile(commands.Cog):
             try:
                 os.remove("src/Images/Usr/{}/{}/profile.png".format(ctx.guild.id, ctx.author.id))
             except:
-                return
+                pass
 
         path = "Temp/{}.png".format(ctx.author.id)
         PictureCreator.CreateProfile(ctx.author).save(path)
@@ -78,7 +78,7 @@ class Profile(commands.Cog):
         os.remove(path)
 
     @cog_ext.cog_slash(
-        name='settext',
+        name='setText',
         description="Задаёт подпись профиля.",
         options=[
             create_option(
@@ -89,7 +89,7 @@ class Profile(commands.Cog):
             )
         ]
     )
-    async def setText(self, ctx: SlashContext, text=""):
+    async def setText(self, ctx: SlashContext, text: str = ""):
         SQLWorker.SetInfoProfile(ctx.author.id, ctx.guild.id, text)
         path = "Temp/{}.png".format(ctx.author.id)
         PictureCreator.CreateProfile(ctx.author).save(path)

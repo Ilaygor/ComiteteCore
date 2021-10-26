@@ -1,17 +1,15 @@
-import sqlite3
+import datetime
+import logging
 
 import discord
 from discord import Client
 from discord.ext import commands, tasks
-import SQLWorker
-import logging
-from . import common, ignorChannels
-import datetime
-
 from discord_slash import cog_ext, SlashContext
-from discord_slash.utils.manage_commands import create_choice, create_option
-from discord_slash.model import SlashCommandOptionType, SlashCommandPermissionType
-from discord_slash.utils.manage_commands import create_permission
+from discord_slash.model import SlashCommandOptionType
+from discord_slash.utils.manage_commands import create_option
+
+import SQLWorker
+from . import common, ignorChannels
 
 logging.basicConfig(filename="admin.log", level=logging.INFO)
 
@@ -50,7 +48,8 @@ class Admin(commands.Cog):
         self.muteTask.start()
         self.votumTask.start()
 
-    def init(self):
+    @staticmethod
+    def init():
         for i in SQLWorker.GetMuteMembers():
             muteList[i[0], i[1]] = {
                 'serverId': i[0],
@@ -94,12 +93,11 @@ class Admin(commands.Cog):
                 SQLWorker.DelVotum(votumList[i]['ServerId'], votumList[i]['MessageId'], )
 
     # Кол-во пришедших
-    @is_owner()
     @cog_ext.cog_slash(
         name='count',
         description="Выводит статистику посещения сервера, а сколько пришло или ушло"
     )
-    async def count(self, ctx):
+    async def count(self, ctx: SlashContext):
         stat = SQLWorker.GetStat(ctx.guild.id)
         embed = discord.Embed(title="Я запомнила " + str(stat[0]) + " чел.", description="На данный момент")
         embed.add_field(name="Ушло", value=str(stat[1]) + " чел.")
@@ -163,7 +161,7 @@ class Admin(commands.Cog):
             common.addMembersOnServer(guild)
         else:
             common.checkMembersOnServer(guild)
-        # common.addRoles(guild)
+        common.addRoles(guild)
         common.addEmojies(guild)
 
     # аudit
@@ -173,7 +171,7 @@ class Admin(commands.Cog):
                                          "новый пользователь, а бот был в отключке.", usage="", brief="Аудит сервера")
     async def audit(self, ctx):
         common.checkMembersOnServer(ctx.guild)
-        # common.addRoles(guild)
+        common.addRoles(ctx.guild)
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")
 
@@ -276,7 +274,7 @@ class Admin(commands.Cog):
         # Создаём голование
         emb = discord.Embed(
             title="Голосование за выдачу Вотума Недовольства пользователю {0}".format(member.name),
-            description="Если это собщение наберёт 11 голосов (:thumbsup:) в течении 1 часа, тогда пользователю {0} "
+            description="Если это собщение наберёт 6 голосов (:thumbsup:) в течении 1 часа, тогда пользователю {0} "
                         "будет выдан мут на 24 часа".format(member.name))
         msg = await ctx.send(embed=emb)
         endTime = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
@@ -295,7 +293,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user):
-        if reaction.count >= 11:
+        if reaction.count >= 6:
 
             message = reaction.message
             member = await message.guild.fetch_member(

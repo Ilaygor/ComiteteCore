@@ -218,15 +218,6 @@ class Profile(commands.Cog):
 
         os.remove(path)
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        if not member.bot:
-            XpSys.AddMem(member.id, member.guild.id)
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        if not member.bot:
-            XpSys.DelMem(member.id, member.guild.id)
 
     @commands.Cog.listener()
     async def on_message(self, message):

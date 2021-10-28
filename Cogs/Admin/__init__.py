@@ -11,6 +11,7 @@ from discord_slash.utils.manage_commands import create_option
 import SQLWorker
 from . import common, ignorChannels
 
+
 logging.basicConfig(filename="admin.log", level=logging.INFO)
 
 

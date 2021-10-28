@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 import SQLWorker
 import PictureCreator
-
+from Cogs.Profile import XpSys
 
 
 def not_bot(member):
@@ -61,6 +61,9 @@ class Okari(commands.Cog):
             except discord.errors.Forbidden:
                 pass
 
+        if not member.bot:
+            XpSys.AddMem(member.id, member.guild.id)
+
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if len(before.roles) < len(after.roles):
@@ -89,6 +92,9 @@ class Okari(commands.Cog):
     async def on_member_remove(self, member):
         try:
             await member.guild.fetch_ban(member)
+            if not member.bot:
+                XpSys.DelMem(member.id, member.guild.id)
+
         except discord.NotFound:
             path = "Temp/{0}.png".format(member.id)
             PictureCreator.CreateLostMessage(member.avatar_url_as(size=128),
@@ -100,6 +106,7 @@ class Okari(commands.Cog):
             file = discord.File(path, filename="MemRemove.png")
             await member.guild.get_channel(SQLWorker.GetInfoChan(member.guild.id)).send(file=file)
             os.remove(path)
+
 
     # Пользователя забанили
     @not_botGuild

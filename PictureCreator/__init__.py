@@ -40,9 +40,9 @@ def CreateFirstWelcomeMessage(memberAvatar, name, memname):
 
 def CreateLostMessage(memberAvatar, name, role, memname):
     memname += " Lost!"
-    Avatar = Image.open(utils.GetAvatarFromUrl(memberAvatar))
+    Avatar = Image.open(utils.GetAvatarFromUrl(memberAvatar)).convert('RGB')
     Avatar.thumbnail((128, 128))
-    ImageDraw.Draw(Avatar, 'RGBA').rectangle([(0, 0), (128, 128)],
+    ImageDraw.Draw(Avatar, 'RGBA').rectangle([0, 0, 128, 128],
                                              fill=(255, 0, 0, 70))
     base = Image.open('src/Images/LabmemberLost.png')
     base.paste(Avatar, (12, 11))

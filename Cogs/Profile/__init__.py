@@ -2,6 +2,7 @@ import os
 import re
 
 import discord
+from discord import MessageType
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext
 from discord_slash.model import SlashCommandOptionType
@@ -222,11 +223,12 @@ class Profile(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         # await self.bot.process_commands(message)
-        if not message.author.bot and not SQLWorker.checkChannel(message.guild.id, message.channel.id):
+        if not message.author.bot and not SQLWorker.checkChannel(message.guild.id, message.channel.id) and not message.type == MessageType.new_member:
             if len(message.mentions):
                 for i in list(set(message.mentions)):
                     if not i.bot and not message.author.bot and not i.id == message.author.id:
                         XpSys.AddMention(i.id, message.guild.id)
+
             await XpSys.AddExp(message.author.id, message.guild.id, len(message.content) / 10, message.channel)
 
             ctx = await self.bot.get_context(message)

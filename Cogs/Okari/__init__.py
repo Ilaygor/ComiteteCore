@@ -5,31 +5,12 @@ import SQLWorker
 import PictureCreator
 from Cogs.Profile import XpSys
 
-
-def not_bot(member):
-    async def predicate(member):
-        return not member.bot
-
-    return commands.check(predicate)
-
-
-def not_botGuild(member):
-    async def predicate(guild, member):
-        return not member.bot
-
-    return commands.check(predicate)
-
-
-
-
-
-
 class Okari(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     # Пользователь присоединился
-    @not_bot
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
         path = "Temp/{0}.png".format(member.id)
@@ -87,7 +68,6 @@ class Okari(commands.Cog):
                     SQLWorker.DelEmoji(i.id)
 
     # Пользователь покинул сервер
-    @not_bot
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         try:
@@ -109,7 +89,6 @@ class Okari(commands.Cog):
 
 
     # Пользователя забанили
-    @not_botGuild
     @commands.Cog.listener()
     async def on_member_ban(self, guild, mem):
         reason = await guild.fetch_ban(mem)

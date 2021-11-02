@@ -47,7 +47,8 @@ def CreateLostMessage(memberAvatar, name, role, memname):
     base = Image.open('src/Images/LabmemberLost.png')
     base.paste(Avatar, (12, 11))
     utils.AddText(name, (160, 65), base)
-    utils.AddText(role.name, (160, 110), base,
+    if role:
+        utils.AddText(role.name, (160, 110), base,
                   size=18, color=role.colour.to_rgb())
     fontsize = utils.AutoFontSize(memname, 338)
     utils.AddText(memname, (152 + utils.CenterText(memname, 338, fontsize), utils.MiddleText(55, fontsize)),

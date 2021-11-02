@@ -9,7 +9,7 @@ logging.basicConfig(filename="Bot.log", level=logging.INFO)
 
 intents = discord.Intents.default()
 intents.members = True
-
+intents.messages = True
 client = commands.Bot(command_prefix='!', description='Amadeus Kurisu', intents=intents)
 slash = SlashCommand(client, sync_commands=True, sync_on_cog_reload=True)
 

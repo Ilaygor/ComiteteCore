@@ -24,12 +24,13 @@ def init():
 
 def AddMem(memberId, serverId):
     usr = SQLWorker.GetMemInfo(memberId, serverId)
+
     UsersData[serverId, memberId] = {
-        'level': usr[2],
-        'xp': usr[0],
-        'maxxp': usr[1],
-        'mentions': usr[3],
-        'TotalXP': usr[4]
+            'level': usr[0],
+            'xp': usr[1],
+            'maxxp': usr[2],
+            'mentions': usr[3],
+            'TotalXP': usr[4]
     }
 
 

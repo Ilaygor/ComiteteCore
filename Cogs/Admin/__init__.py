@@ -79,6 +79,7 @@ class Admin(commands.Cog):
                 except PermissionError:
                     pass
                 SQLWorker.DelMute(muteList[i]['userId'], muteList[i]['serverId'])
+                muteList.pop(i)
 
     @tasks.loop(seconds=60, reconnect=True)
     async def votumTask(self):
@@ -92,6 +93,7 @@ class Admin(commands.Cog):
                 except discord.errors.NotFound:
                     pass
                 SQLWorker.DelVotum(votumList[i]['ServerId'], votumList[i]['MessageId'], )
+                votumList.pop(i)
 
     # Кол-во пришедших
     @cog_ext.cog_slash(

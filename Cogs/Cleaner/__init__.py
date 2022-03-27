@@ -1,32 +1,16 @@
+import discord
 from discord.ext import commands
-from discord_slash import cog_ext
-from discord_slash.model import SlashCommandOptionType
-from discord_slash.utils.manage_commands import create_option
+from discord.commands import slash_command, Option
 
 
 class Cleaner(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cog_ext.cog_slash(
-        name='clear',
-        description="Чистит канал от сообщений бота.",
-        options=[
-            create_option(
-                name="channel",
-                description="Пинг Канала который нужно очистить",
-                required=False,
-                option_type=SlashCommandOptionType.CHANNEL
-            ),
-            create_option(
-                name="count",
-                description="Число последний сообщений среди которых нужно удалить",
-                required=False,
-                option_type=SlashCommandOptionType.INTEGER
-            )
-        ]
-    )
-    async def clear(self, ctx, channel=None, count=100):
+    @slash_command(name='clear', description="Чистит канал от сообщений ботов.")
+    async def clear(self, ctx,
+                    channel: Option(discord.TextChannel, 'Выберите пользователя, которому выдаём Вотум', required=False, default=None),
+                    count: Option(int, 'Число последний сообщений, которые нужно удалить', required=False, default=10, min_value=1, max_value=500)):
         if not channel:
             channel = ctx.channel
         async for i in channel.history(limit=int(count)):

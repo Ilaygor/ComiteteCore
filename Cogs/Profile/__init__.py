@@ -3,15 +3,18 @@ import re
 
 import discord
 from discord import MessageType
+from discord.commands import slash_command, Option
 from discord.ext import commands
-from discord_slash import cog_ext, SlashContext
-from discord_slash.model import SlashCommandOptionType
-from discord_slash.utils.manage_commands import create_choice, create_option
-
-import PictureCreator
-import SQLWorker
-from PictureCreator.utils import ConvrterToCI
+from sqlalchemy import desc
 from . import XpSys
+import PictureCreator
+from PictureCreator.utils import ConvrterToCI
+from models.Emojies import Emojie
+from models.IgnorLists import IgnoreList
+from models.Members import Member
+from models.database import Session
+
+session = Session()
 
 
 class Profile(commands.Cog):
@@ -19,52 +22,46 @@ class Profile(commands.Cog):
         self.bot = bot
         XpSys.init()
 
-    @cog_ext.cog_slash(
+    @slash_command(
         name='profile',
-        description="Выводит профиль пользователя.",
-        options=[
-            create_option(
-                name="member",
-                description="@Пинг пользователя чей профиль вывести",
-                required=False,
-                option_type=SlashCommandOptionType.MENTIONABLE
-            )
-        ]
+        description="Выводит профиль пользователя."
     )
-    async def profile(self, ctx: SlashContext, member=None):
+    async def profile(self, ctx,
+                      member: Option(discord.Member, description="Выберите пользователя, чей профиль вывести",
+                                     required=False, default=None)):
         if member:
-            author = await commands.MemberConverter().convert(ctx, member)
+            author = member
         else:
             author = ctx.author
 
         path = "Temp/{}.png".format(author.id)
-        PictureCreator.CreateProfile(author).save(path)
+        info = session.query(Member).filter(Member.MemberId == author.id).filter(
+            Member.ServerId == author.guild.id).first()
+        PictureCreator.CreateProfile(author, info).save(path)
 
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
 
         os.remove(path)
 
-    @cog_ext.cog_slash(
-        name='setBg',
+    @slash_command(
+        name='setbg',
         description="Устанавливает задний фон для профиля. Приложить изображение или ссылку на изображение.",
-        options=[
-            create_option(
-                name="url",
-                description="Ссылка на задний фон",
-                required=False,
-                option_type=SlashCommandOptionType.STRING
-            )
-        ]
     )
-    async def setBg(self, ctx: SlashContext, url: str = None):
+    async def setbg(self, ctx,
+                    img: Option(discord.Attachment, "Изображение для заднего фона", required=False, default=None),
+                    url: Option(str, "Ссылка на задний фон", required=False, default=None)):
         if url:
             try:
-                urlToPic = url
-                PictureCreator.SetBG(ctx.guild.id, ctx.author.id, urlToPic)
+                PictureCreator.SetBG(ctx.guild.id, ctx.author.id, url)
             except:
                 await ctx.send('Некорректная ссылка на изображение.')
                 return
+        elif img:
+            if 'image' not in img.content_type:
+                await ctx.send('Некорректное изображение.')
+                return
+            PictureCreator.SetBG(ctx.guild.id, ctx.author.id, img.url)
         else:
             try:
                 os.remove("src/Images/Usr/{}/{}/profile.png".format(ctx.guild.id, ctx.author.id))
@@ -72,171 +69,152 @@ class Profile(commands.Cog):
                 pass
 
         path = "Temp/{}.png".format(ctx.author.id)
-        PictureCreator.CreateProfile(ctx.author).save(path)
+
+        info = session.query(Member) \
+            .filter(Member.MemberId == ctx.author.id) \
+            .filter(Member.ServerId == ctx.author.guild.id).first()
+        PictureCreator.CreateProfile(ctx.author, info).save(path)
 
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
         os.remove(path)
 
-    @cog_ext.cog_slash(
-        name='setText',
-        description="Задаёт подпись профиля.",
-        options=[
-            create_option(
-                name="text",
-                description="Информация",
-                required=False,
-                option_type=SlashCommandOptionType.STRING
-            )
-        ]
+    @slash_command(
+        name='settext',
+        description="Задаёт подпись профиля."
     )
-    async def setText(self, ctx: SlashContext, text: str = ""):
-        SQLWorker.SetInfoProfile(ctx.author.id, ctx.guild.id, text)
+    async def settext(self, ctx, text: Option(str, description="Подпись профиля.", required=False, default="")):
+        member = session.query(Member) \
+            .filter(Member.MemberId == ctx.author.id) \
+            .filter(Member.ServerId == ctx.guild.id).first()
+        member.Info = text
+
         path = "Temp/{}.png".format(ctx.author.id)
-        PictureCreator.CreateProfile(ctx.author).save(path)
+        info = session.query(Member) \
+            .filter(Member.MemberId == ctx.author.id) \
+            .filter(Member.ServerId == ctx.author.guild.id).first()
+        PictureCreator.CreateProfile(ctx.author, info).save(path)
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
         os.remove(path)
 
-    @cog_ext.cog_slash(
+    @slash_command(
         name='avatar',
-        description="Выводит аватар пользователя.",
-        options=[
-            create_option(
-                name="member",
-                description="Пинг пользователя",
-                required=False,
-                option_type=SlashCommandOptionType.MENTIONABLE
-            )
-        ]
+        description="Выводит аватар пользователя."
     )
-    async def avatar(self, ctx, member=None):
+    async def avatar(self, ctx, member: Option(discord.Member, "Пользователь", required=False, default=None)):
         if member:
-            author = await commands.MemberConverter().convert(ctx, member)
+            author = member
         else:
             author = ctx.author
 
-        path = PictureCreator.utils.GetAvatarFromUrl(author.avatar_url_as(size=4096))
+        path = PictureCreator.utils.GetAvatarFromUrl(PictureCreator.GetAvatar(author, size=4096))
         file = discord.File(path, filename="avatar.gif")
         await ctx.send("Avatar " + author.name, file=file)
 
-    @cog_ext.cog_slash(
+    @slash_command(
         name='rank',
         description="Выводит ранг пользователя.",
-        options=[
-            create_option(
-                name="member",
-                description="Пинг пользователя",
-                required=False,
-                option_type=SlashCommandOptionType.MENTIONABLE
-            )
-        ]
     )
-    async def rank(self, ctx, member=None):
+    async def rank(self, ctx, member: Option(discord.Member, "Пользователь", required=False, default=None)):
         if member:
-            author = await commands.MemberConverter().convert(ctx, member)
+            author = member
         else:
             author = ctx.author
+
         path = "Temp/{}.png".format(author.id)
-        PictureCreator.CreateRank(author).save(path)
+        info = session.query(Member).filter(Member.MemberId == author.id).filter(
+            Member.ServerId == author.guild.id).first()
+        PictureCreator.CreateRank(author, info).save(path)
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
         os.remove(path)
 
-    @cog_ext.cog_slash(
+    @slash_command(
         name='top',
-        description="Выводит рейтинг сервера.",
-        options=[
-            create_option(
-                name="cat",
-                description="Категория рейтинга",
-                required=False,
-                option_type=SlashCommandOptionType.STRING,
-                choices=[
-                    create_choice(
-                        name='Опыт',
-                        value='exp'
-                    ),
-                    create_choice(
-                        name='Упоминания',
-                        value='men',
-                    ),
-                    create_choice(
-                        name='Эмоджи',
-                        value='emoji',
-                    )
-                ]
-            ),
-            create_option(
-                name="page",
-                description="Страница рейтинга",
-                required=False,
-                option_type=SlashCommandOptionType.INTEGER,
-            )
-        ]
+        description="Выводит рейтинг сервера."
     )
-    async def top(self, ctx, cat: str = "exp", page: int = 1):
+    async def top(self, ctx,
+                  cat: Option(str, "Категория рейтинга", default='Опыт', choices=["Опыт", "Упоминания", "Эмоджи"],
+                              required=False),
+                  page: Option(int, 'Страница рейтинга', min_value=1, default=1, required=True)):
 
         members = []
         page = int(page)
         if cat.isnumeric():
             page = int(cat)
-            cat = "exp"
+            cat = "Опыт"
 
-        if cat == 'exp':
-            for i in SQLWorker.GetTopMembers(page - 1, ctx.guild.id):
-                mem = ctx.guild.get_member(i[0])
+        page -= 1
+        if cat == 'Опыт':
+            for member in session.query(Member)\
+                    .filter(Member.IsAlive)\
+                    .filter(Member.ServerId == ctx.guild.id)\
+                    .order_by(desc(Member.TotalXp)).limit(5).offset(5 * page):
+                mem = ctx.guild.get_member(member.MemberId)
                 members.append({
                     "mem": mem,
-                    "data": ConvrterToCI(round(i[1], 2)) + "xp",
-                    "url": mem.avatar_url_as(size=64)
+                    "data": ConvrterToCI(round(member.TotalXp, 2)) + "xp",
+                    "url": PictureCreator.GetAvatar(mem, size=64)
                 })
-        elif cat == "men":
-            for i in SQLWorker.GetTopMenMembers(page - 1, ctx.guild.id):
-                mem = ctx.guild.get_member(i[0])
+        elif cat == "Упоминания":
+            for member in session.query(Member)\
+                    .filter(Member.IsAlive)\
+                    .filter(Member.ServerId == ctx.guild.id)\
+                    .order_by(desc(Member.Mentions)).limit(5).offset(5 * page):
+                mem = ctx.guild.get_member(member.MemberId)
                 members.append({
                     "mem": mem,
-                    "url": mem.avatar_url_as(size=64),
-                    "data": str(i[1]) + " mentions"
+                    "url": PictureCreator.GetAvatar(mem, size=64),
+                    "data": str(member.Mentions) + " mentions"
                 })
-        elif cat == "emoji":
-            for i in SQLWorker.GetTopEmoji(page - 1, ctx.guild.id):
-                emoji = await ctx.guild.fetch_emoji(i[0])
+        elif cat == "Эмоджи":
+            for emojie in session.query(Emojie)\
+                    .filter(Emojie.ServerId == ctx.guild.id)\
+                    .order_by(desc(Emojie.CountUsage)).limit(5).offset(5 * page):
+                emoji = await ctx.guild.fetch_emoji(emojie.Id)
                 members.append({
                     "mem": emoji,
                     "url": emoji.url,
-                    "data": str(i[1]) + " detected"
+                    "data": str(emojie.CountUsage) + " detected"
                 })
         else:
             await ctx.send("Параметр не найден!")
             return
 
         path = "Temp/top{}.png".format(page)
-        PictureCreator.GetTop(members, page - 1).save(path)
+        PictureCreator.GetTop(members, page).save(path)
 
         file = discord.File(path, filename="top.png")
         await ctx.send(file=file)
 
         os.remove(path)
 
-
     @commands.Cog.listener()
     async def on_message(self, message):
-        # await self.bot.process_commands(message)
-        if not message.author.bot and not SQLWorker.checkChannel(message.guild.id, message.channel.id) and not message.type == MessageType.new_member:
+        if message.author.bot or message.type == MessageType.new_member:
+            return
+        ignoreList = session.query(IgnoreList).filter(IgnoreList.ServerId == message.guild.id).filter(
+            IgnoreList.ChannelId == message.channel.id).first()
+        if not ignoreList:
             if len(message.mentions):
                 for i in list(set(message.mentions)):
                     if not i.bot and not message.author.bot and not i.id == message.author.id:
-                        XpSys.AddMention(i.id, message.guild.id)
+                        XpSys.AddMention(memberId=i.id, serverId=message.guild.id)
 
-            await XpSys.AddExp(message.author.id, message.guild.id, len(message.content) / 10, message.channel)
+            await XpSys.AddExp(memberId=message.author.id, ServerID=message.guild.id, count=len(message.content) / 10, channel=message.channel)
 
             ctx = await self.bot.get_context(message)
-
             for emoji in list(set(re.findall("<\D+\d+>", message.content))):
                 try:
                     emj = await commands.EmojiConverter().convert(ctx, emoji)
-                    SQLWorker.IncEmoji(message.guild.id, emj.id)
+                    emojie = session.query(Emojie).filter(Emojie.ServerId == emj.guild.id, Emojie.Id == emj.id).first()
+                    if emojie:
+                        emojie.IncrementUsage()
+                    else:
+                        emojie = Emojie(serverId=emj.guild.id, id=emj.id)
+                        session.add(emojie)
+                    session.commit()
                 except commands.errors.BadArgument:
                     pass
 

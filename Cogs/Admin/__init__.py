@@ -4,15 +4,19 @@ import logging
 import discord
 from discord import Client
 from discord.ext import commands, tasks
-from discord_slash import cog_ext, SlashContext
-from discord_slash.model import SlashCommandOptionType
-from discord_slash.utils.manage_commands import create_option
+from discord.commands import slash_command, Option
 
-import SQLWorker
+from models.Votums import Votum
+from models.Members import Member
+from models.Servers import Server
+from models.Emojies import Emojie
+from models.database import Session
+
 from . import common, ignorChannels
 
-
 logging.basicConfig(filename="admin.log", level=logging.INFO)
+
+session = Session()
 
 
 def is_owner():
@@ -22,89 +26,95 @@ def is_owner():
     return commands.check(predicate)
 
 
-muteList = {}
 votumList = {}
-
-
-async def muteFunc(member, hours):
-    muteRole = SQLWorker.GetMuteRole(member.guild.id)
-    import datetime
-    endTime = datetime.datetime.utcnow() + datetime.timedelta(hours=hours)
-    SQLWorker.MuteMember(muteRole, member.id, member.guild.id, endTime)
-
-    await member.add_roles(member.guild.get_role(int(muteRole)))
-    muteList[member.guild.id, member.id] = {
-        'serverId': member.guild.id,
-        'userId': member.id,
-        'roleId': muteRole,
-        'endTime': str(endTime),
-    }
-    return True
 
 
 class Admin(commands.Cog):
     def __init__(self, bot: Client):
         self.bot = bot
         self.init()
-        self.muteTask.start()
         self.votumTask.start()
 
     @staticmethod
     def init():
-        for i in SQLWorker.GetMuteMembers():
-            muteList[i[0], i[1]] = {
-                'serverId': i[0],
-                'userId': i[1],
-                'roleId': i[2],
-                'endTime': i[3],
-            }
-
-        for i in SQLWorker.GetVotums():
-            votumList[i[0], i[1]] = {
-                'ServerId': i[0],
-                'MessageId': i[1],
-                'UserId': i[2],
-                'EndTime': i[3],
-                'ChannelId': i[4]
-            }
-
-    @tasks.loop(seconds=60, reconnect=True)
-    async def muteTask(self):
-        for i in muteList:
-            if datetime.datetime.utcnow() >= datetime.datetime.strptime(muteList[i]['endTime'], '%Y-%m-%d %H:%M:%S.%f'):
-                guild = await self.bot.fetch_guild(muteList[i]['serverId'])
-                member = await guild.fetch_member(muteList[i]['userId'])
-                try:
-                    await member.remove_roles(guild.get_role(int(muteList[i]['roleId'])))
-                except PermissionError:
-                    pass
-                SQLWorker.DelMute(muteList[i]['userId'], muteList[i]['serverId'])
-                muteList.pop(i)
+        for votum in session.query(Votum):
+            votumList[votum.ServerId, votum.MessageId] = votum
 
     @tasks.loop(seconds=60, reconnect=True)
     async def votumTask(self):
         for i in votumList:
-            if datetime.datetime.utcnow() >= \
-                    datetime.datetime.strptime(votumList[i]['EndTime'], '%Y-%m-%d %H:%M:%S.%f'):
+            votum = votumList[i]
+            if datetime.datetime.utcnow() >= votum.EndTime:
                 try:
-                    channel = await self.bot.fetch_channel(votumList[i]['ChannelId'])
-                    message = await channel.fetch_message(votumList[i]['MessageId'])
+                    channel = await self.bot.fetch_channel(votum.ChannelId)
+                    message = await channel.fetch_message(votum.MessageId)
                     await message.delete()
                 except discord.errors.NotFound:
                     pass
-                SQLWorker.DelVotum(votumList[i]['ServerId'], votumList[i]['MessageId'], )
+                session.delete(votum)
+                session.commit()
                 votumList.pop(i)
 
-    # Кол-во пришедших
-    @cog_ext.cog_slash(
-        name='count',
-        description="Выводит статистику посещения сервера, а сколько пришло или ушло"
+    @slash_command(
+        name='votum',
+        description="Начинает голосование по выдачи Вотума недовольства (Мута) пользователю.",
     )
-    async def count(self, ctx: SlashContext):
-        stat = SQLWorker.GetStat(ctx.guild.id)
-        embed = discord.Embed(title="Я запомнила " + str(stat[0]) + " чел.", description="На данный момент")
-        embed.add_field(name="Ушло", value=str(stat[1]) + " чел.")
-        embed.add_field(name="Осталось", value=str(stat[2]) + " чел.")
+    async def votum(self, ctx, member: Option(discord.Member, "Выберите пользователя, которому выдаём Вотум")):
+        if member.bot:
+            emb = discord.Embed(
+                title="Некорректный вызов",
+                description="Пользователь {0} - это Бот".format(member.name))
+            return await ctx.send(embed=emb)
+
+        # Проверяем не идёт ли уже голосование за мут
+        votum = session.query(Votum).filter(Votum.ServerId == ctx.guild.id, Votum.MemberId == member.id).first()
+        if votum:
+            emb = discord.Embed(
+                title="Некорректный вызов",
+                description="{1}, голосование по выдачи Вотума пользователю {0} уже идёт".format(member.name,
+                                                                                                 ctx.author.name))
+            return await ctx.send(embed=emb)
+
+        # Создаём голование
+        emb = discord.Embed(
+            title="Голосование за выдачу Вотума Недовольства пользователю {0}".format(member.name),
+            description="Если это собщение наберёт 6 голосов (:thumbsup:) в течении 1 часа, тогда пользователю {0} "
+                        "будет выдан мут на 24 часа".format(member.name))
+        msg = await ctx.send(embed=emb)
+        votum = Votum(channelId=ctx.channel.id, serverId=ctx.guild.id, memberId=member.id, messageId=msg.id)
+        session.add(votum)
+        session.commit()
+        votumList[ctx.guild.id, msg.id] = votum
+        await msg.add_reaction('\N{THUMBS UP SIGN}')
+        return msg
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction: discord.Reaction, user):
+        if reaction.count >= 6:
+            hours = 24
+            message = reaction.message
+            votum = votumList[reaction.message.guild.id, reaction.message.id]
+
+            member = await message.guild.fetch_member(votum.MemberId)
+            await member.timeout(datetime.datetime.now() + datetime.timedelta(days=1),
+                                 reason="Большинство проголосовало за мут")
+            votumList.pop((votum.ServerId, votum.MessageId))
+            session.delete(votum)
+            session.commit()
+            await message.delete()
+            return await message.channel.send(content="Пользователь {} заглушен на {} часа".format(member.name, hours))
+
+    # Кол-во пришедших
+    @slash_command(name='count', description='Выводит статистику посещения сервера, а сколько пришло или ушло')
+    async def count(self, ctx):
+        members = session.query(Member).filter(Member.ServerId == ctx.guild.id)
+        all = members.count()
+        alive = members.filter(Member.IsAlive).count()
+        dead = members.filter(Member.IsAlive == False).count()
+
+        embed = discord.Embed(title="Я запомнила " + str(all) + " чел.", description="На данный момент")
+        embed.add_field(name="Ушло", value=str(dead) + " чел.")
+        embed.add_field(name="Осталось", value=str(alive) + " чел.")
         await ctx.send(embed=embed)
 
     # Устанавливает информационный канал
@@ -114,7 +124,9 @@ class Admin(commands.Cog):
                                                                                        "канал")
     async def setInfo(self, ctx, channel):
         ch = await commands.TextChannelConverter().convert(ctx, channel)
-        SQLWorker.SetInfoChan(ctx.guild.id, ch.id)
+        server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
+        server.InfoChannel = ch.id
+        session.commit()
         await ctx.send("InfoChannel: {}".format(channel))
 
     # Устанавливает роль новичков
@@ -122,14 +134,15 @@ class Admin(commands.Cog):
     @commands.command(name="setjoinrole", help="Задаёт роль для пользовтелей который только-что присоединились.",
                       usage="Название роли", brief="Устанавливает роль для новичков")
     async def setJoinRole(self, ctx, roleName=None):
+        server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
         if roleName:
             role = await commands.RoleConverter().convert(ctx, roleName)
-            SQLWorker.SetJoinRole(ctx.guild.id, role.id)
-
+            server.JoinRole = role.id
+            session.commit()
             await ctx.send("Join role changed to: {}".format(roleName))
         else:
-            SQLWorker.SetJoinRole(ctx.guild.id, roleName)
-
+            server.JoinRole = roleName
+            session.commit()
             await ctx.send("Join role cleared")
 
     # Устанавливает название участника сервера
@@ -139,7 +152,9 @@ class Admin(commands.Cog):
                       usage="[Строка обозначающее имя участника канала == Member]",
                       brief="Устанавливает имя участника сервера")
     async def setMemName(self, ctx, name="Member"):
-        SQLWorker.SetMemName(ctx.guild.id, name)
+        server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
+        server.MemberName = name
+        session.commit()
         await ctx.send("Member name changed to: {}".format(name))
 
     # Устанавливает текст при бане пользователя на сервере
@@ -148,19 +163,24 @@ class Admin(commands.Cog):
                       usage="[Сроки обозначающие, что пользовтатель был забанен == has been banned.]",
                       brief="Устанавливает текст при бане пользователя на сервере.")
     async def setBanText(self, ctx, *args):
+        server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
         text = ' '.join(args)
         if len(text) == 0:
             text = 'has been banned.'
-        SQLWorker.SetBanText(ctx.guild.id, text)
+        server.BanText = text
+        session.commit()
         await ctx.send("Ban text changed for: {}".format(text))
 
     # Подключение к серверу
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         logging.info("Join to: {} {}".format(guild.id, guild.name))
-        if not SQLWorker.CheckServer(guild.id):
+        server = session.query(Server).filter(Server.Id == guild.id).first()
+        if not server:
             common.createServerFolder(guild)
-            SQLWorker.AddServer(guild.id)
+            server = Server(id=guild.id)
+            session.add(server)
+            session.commit()
             common.addMembersOnServer(guild)
         else:
             common.checkMembersOnServer(guild)
@@ -173,7 +193,15 @@ class Admin(commands.Cog):
                                          "присутсвуют, а какие отсутсвуют и производит учёт.\n Полезно, когда пришёл "
                                          "новый пользователь, а бот был в отключке.", usage="", brief="Аудит сервера")
     async def audit(self, ctx):
-        common.checkMembersOnServer(ctx.guild)
+        server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
+        if not server:
+            common.createServerFolder(ctx.guild)
+            server = Server(id=ctx.guild.id)
+            session.add(server)
+            session.commit()
+            common.addMembersOnServer(ctx.guild)
+        else:
+            common.checkMembersOnServer(ctx.guild)
         common.addRoles(ctx.guild)
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")
@@ -214,120 +242,19 @@ class Admin(commands.Cog):
         for i in ctx.guild.emojis:
             emojies.update({i.id: i})
 
-        for i in SQLWorker.GetAllEmojie(ctx.guild.id):
-            emoji = emojies.get(i[1])
+        for emojie in session.query(Emojie).filter(Emojie.ServerId == ctx.guild.id):
+            emoji = emojies.get(emojie.Id)
             if emoji:
                 embed = discord.Embed(title=emoji.name)
                 embed.set_thumbnail(url=emoji.url)
                 embed.add_field(name="Кол-во:",
-                                value=i[2],
+                                value=emojie.CountUsage,
                                 inline=True)
                 import datetime
                 embed.add_field(name="Последнее использование:",
-                                value=str(datetime.datetime.fromtimestamp(i[3])),
+                                value=str(emojie.LastUsage),
                                 inline=True)
                 await ctx.send(embed=embed)
-
-    @is_owner()
-    @commands.command(name="setmuterole", help="Задаёт роль для пользовтелей которых нужно замутить.",
-                      usage="Название роли", brief="Устанавливает роль для мута")
-    async def setMuteRole(self, ctx, roleName=None):
-        if roleName:
-            role = await commands.RoleConverter().convert(ctx, roleName)
-            SQLWorker.SetMuteRole(ctx.guild.id, role.id)
-
-            await ctx.send("Mute role changed to: {}".format(roleName))
-        else:
-            SQLWorker.SetMuteRole(ctx.guild.id, roleName)
-            await ctx.send("Mute role cleared")
-
-    @cog_ext.cog_slash(
-        name='votum',
-        description="Начинает голосование по выдачи Вотума недовольства (Мута) пользователю.",
-        options=[
-            create_option(
-                name="member",
-                description="@Пинг пользователя, которому выдаём Вотум",
-                required=True,
-                option_type=SlashCommandOptionType.USER,
-            ),
-        ]
-    )
-    async def votum(self, ctx: SlashContext, member):
-        if not SQLWorker.CheckMuteRole(ctx.guild.id):
-            return await ctx.send("Не найдена Мут-роль воспользйетсь коммандой !setmuterole")
-
-        if member.bot:
-            emb = discord.Embed(
-                title="Некорректный вызов",
-                description="Пользователь {0} - это Бот".format(member.name))
-            return await ctx.send(embed=emb)
-
-        if muteList.get((member.guild.id, member.id)):
-            return await ctx.send("Пользователь {} уже в муте".format(member.name))
-
-        # Проверяем не идёт ли уже голосование за мут
-        if SQLWorker.CheckVotum(member.id):
-            emb = discord.Embed(
-                title="Некорректный вызов",
-                description="{1}, голосование по выдачи Вотума пользователю {0} уже идёт".format(member.name,
-                                                                                                 ctx.author.name))
-            return await ctx.send(embed=emb)
-
-        # Создаём голование
-        emb = discord.Embed(
-            title="Голосование за выдачу Вотума Недовольства пользователю {0}".format(member.name),
-            description="Если это собщение наберёт 6 голосов (:thumbsup:) в течении 1 часа, тогда пользователю {0} "
-                        "будет выдан мут на 24 часа".format(member.name))
-        msg = await ctx.send(embed=emb)
-        endTime = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        SQLWorker.CreateVotum(ctx.guild.id, ctx.channel.id, member.id, msg.id, endTime)
-
-        votumList[ctx.guild.id, msg.id] = {
-            'ServerId': ctx.guild.id,
-            'ChannelId': ctx.channel.id,
-            'MessageId': msg.id,
-            'UserId': member.id,
-            'EndTime': str(endTime),
-        }
-
-        await msg.add_reaction('\N{THUMBS UP SIGN}')
-        return msg
-
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction: discord.Reaction, user):
-        if reaction.count >= 6:
-
-            message = reaction.message
-            member = await message.guild.fetch_member(
-                votumList[reaction.message.guild.id, reaction.message.id]['UserId'])
-            if not await muteFunc(member, 24):
-                return
-
-            votumList.pop((reaction.message.guild.id, reaction.message.id))
-            SQLWorker.DelVotum(reaction.message.guild.id, reaction.message.id)
-            await reaction.message.delete()
-
-            return await message.send("Пользователь {} заглушен на {} часа".format(member.name, 24))
-
-    @is_owner()
-    @commands.command(name="mute", help="Мутит пользователя.",
-                      usage="@Пинг пользователя [Кол-во часов мута]", brief="Мут пользователя")
-    @commands.has_permissions(ban_members=True)
-    async def mute(self, ctx, member, hours: int = 4):
-        if not SQLWorker.CheckMuteRole(ctx.guild.id):
-            await ctx.send("Не найдена Мут-роль воспользйетсь коммандой !setmuterole")
-            return
-        if member:
-            member = await commands.MemberConverter().convert(ctx, member)
-            if not member:
-                await ctx.send("Пользователь {} не найден".format(member.name))
-                return
-            if muteList.get((member.guild.id, member.id)):
-                await ctx.send("Пользователь {} уже в муте".format(member.name))
-                return
-        if await muteFunc(member, hours):
-            await ctx.send("Пользователь {} заглушен на {} часа".format(member.name, hours))
 
 
 def setup(client):

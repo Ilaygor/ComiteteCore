@@ -2,16 +2,13 @@ import discord
 from discord.ext import commands
 import os
 import logging
-from discord_slash import SlashCommand
 
 
 logging.basicConfig(filename="Bot.log", level=logging.INFO)
 
-intents = discord.Intents.default()
-intents.members = True
-intents.messages = True
+intents = discord.Intents.all()
+
 client = commands.Bot(command_prefix='!', description='Amadeus Kurisu', intents=intents)
-slash = SlashCommand(client, sync_commands=True, sync_on_cog_reload=True)
 
 @client.event
 async def on_ready():

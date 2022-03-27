@@ -1,28 +1,38 @@
-import discord
-from discord.ext.commands import TextChannelConverter
-from discord.ext import commands
 from datetime import datetime
-import SQLWorker
+
+import discord
+from discord.ext import commands
+from discord.ext.commands import TextChannelConverter
+
+from models.IgnorLists import IgnoreList
+from models.database import Session
+
+session = Session()
 
 
 async def list(ctx):
-    IgnorList = SQLWorker.GetIgnorList(ctx.guild.id)
+    ignoreLists = session.query(IgnoreList).filter(IgnoreList.ServerId == ctx.guild.id).all()
     embed = discord.Embed(title="Cписок игнорируемых каналов:",
                           description="Каналы в которых бот не учитывает XP.")
-    for i in IgnorList:
-        channel = ctx.guild.get_channel(i[0])
+    for ignoreList in ignoreLists:
+        channel = ctx.guild.get_channel(ignoreList.ChannelId)
         if channel:
             embed.add_field(name=channel.name, inline=False,
-                            value="Добавлен: " + str(datetime.fromtimestamp(i[1]).date()))
+                            value="Добавлен: " + str(ignoreList.CreatedTime))
         else:
-            SQLWorker.DelIgnorList(i[0], ctx.guild.id)
+            ignoreList.delete()
+            session.commit()
+
     return embed
 
 
 async def add(ctx, channel):
     ch = await commands.TextChannelConverter().convert(ctx, channel)
-    if not SQLWorker.checkChannel(ctx.guild.id, ch.id):
-        SQLWorker.AddIgnorList(ch.id, ctx.guild.id)
+    channelSql = session.query(IgnoreList).filter(IgnoreList.ServerId == ctx.guild.id, IgnoreList.ChannelId == ch.id).first()
+    if not channelSql:
+        newList = IgnoreList(channelId=ch.id, serverId=ctx.guild.id)
+        session.add(newList)
+        session.commit()
         embed = discord.Embed(title="Канал {} успешно добавлен в список игнора.".format(ch.name))
     else:
         embed = discord.Embed(title="Канал {} уже добавлен в список игнора.".format(ch.name))
@@ -31,8 +41,10 @@ async def add(ctx, channel):
 
 async def remove(ctx, channel):
     ch = await TextChannelConverter().convert(ctx, channel)
-    if SQLWorker.checkChannel(ctx.guild.id, ch.id):
-        SQLWorker.DelIgnorList(ch.id, ctx.guild.id)
+    channelSql = session.query(IgnoreList).filter(IgnoreList.ServerId == ctx.guild.id, IgnoreList.ChannelId == ch.id).first()
+    if channelSql:
+        session.delete(channelSql)
+        session.commit()
         embed = discord.Embed(title="Канал {} успешно удалён из списока игнора.".format(ch.name))
     else:
         embed = discord.Embed(title="Канал {} отсутсвует в списоке игнора.".format(ch.name))

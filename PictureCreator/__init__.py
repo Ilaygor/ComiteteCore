@@ -1,6 +1,9 @@
+import discord
 from PIL import Image
 from PIL import ImageDraw
 import os
+
+import SQLWorker
 from . import utils
 
 
@@ -49,7 +52,7 @@ def CreateLostMessage(memberAvatar, name, role, memname):
     utils.AddText(name, (160, 65), base)
     if role:
         utils.AddText(role.name, (160, 110), base,
-                  size=18, color=role.colour.to_rgb())
+                      size=18, color=role.colour.to_rgb())
     fontsize = utils.AutoFontSize(memname, 338)
     utils.AddText(memname, (152 + utils.CenterText(memname, 338, fontsize), utils.MiddleText(55, fontsize)),
                   base,
@@ -59,11 +62,18 @@ def CreateLostMessage(memberAvatar, name, role, memname):
     return base
 
 
-def CreateProfile(member):
-    base = Image.open('src/Images/Profile.png')
+from models.Members import Member
 
-    import SQLWorker
-    info = SQLWorker.GetMemInfo(member.id, member.guild.id)
+def GetAvatar(member: discord.Member, size:int = 128):
+    avatar = member.guild_avatar
+    if not avatar:
+        avatar = member.display_avatar
+    avatar = avatar.with_size(size).with_format("png")
+    return avatar
+
+
+def CreateProfile(member: discord.Member, info: Member):
+    base = Image.open('src/Images/Profile.png')
 
     if os.path.exists("src/Images/Usr/" + str(member.guild.id) + "/" + str(member.id) + "/profile.png"):
         bg = Image.open("src/Images/Usr/" + str(member.guild.id) + "/" + str(member.id) + "/profile.png")
@@ -71,7 +81,7 @@ def CreateProfile(member):
         base = bg
         del bg
 
-    Avatar = Image.open(utils.GetAvatarFromUrl(member.avatar_url_as(size=128)))
+    Avatar = Image.open(utils.GetAvatarFromUrl(GetAvatar(member).url))
     base.paste(Avatar, (24, 94))
     del Avatar
 
@@ -88,19 +98,19 @@ def CreateProfile(member):
             break
     utils.AddText(nik, (172, 97), base, size=fontsize)
 
-    utils.AddText(str(info[0]).rjust(3, '0') + "LV", (327, 161), base, color=(255, 90, 0), size=18,
+    utils.AddText(str(info.Level).rjust(3, '0') + "LV", (327, 161), base, color=(255, 90, 0), size=18,
                   font="BONX-TubeBold.otf")
 
-    if info[1] != 0:
+    if info.Xp != 0:
         zero = 2.16
-        Re = info[1] / (info[2] / 100)
+        Re = info.Xp / (info.MaxXp / 100)
         ImageDraw.Draw(base, 'RGBA').rectangle([(174, 191), (174 + Re * zero, 214)], fill=(255, 90, 0, 255))
 
-    utils.AddText(str(info[3]).rjust(4, '0'), (28, 265), base, color=(255, 90, 0), size=24, font="BONX-TubeBold.otf")
+    utils.AddText(str(info.Mentions).rjust(4, '0'), (28, 265), base, color=(255, 90, 0), size=24, font="BONX-TubeBold.otf")
 
     utils.AddText(member.top_role.name, (180, 125), base, color=member.colour.to_rgb(), size=18)
 
-    utils.AddText("XP:" + utils.ConvrterToCI(round(info[4], 2)).rjust(7, '0'), (173, 161), base, color=(255, 90, 0),
+    utils.AddText("XP:" + utils.ConvrterToCI(round(info.TotalXp, 2)).rjust(7, '0'), (173, 161), base, color=(255, 90, 0),
                   size=18,
                   font="BONX-TubeBold.otf")
 
@@ -108,16 +118,14 @@ def CreateProfile(member):
                   color=(255, 90, 0),
                   size=24, font="BONX-TubeBold.otf")
 
-    text = SQLWorker.GetInfoProfile(member.id, member.guild.id)
-
     fontsize = 22
     height = 138
     width = 500
-    lines = utils.WrapText(text, width, fontsize)
+    lines = utils.WrapText(info.Info, width, fontsize)
     while fontsize > 10:
         if fontsize * len(lines) > height:
             fontsize -= 2
-            lines = utils.WrapText(text, width, fontsize)
+            lines = utils.WrapText(info.Info, width, fontsize)
         else:
             break
 
@@ -151,15 +159,11 @@ def SetBG(serverid, id, url):
     bg.save("src/Images/Usr/" + str(serverid) + "/" + str(id) + "/profile.png")
 
 
-def CreateRank(member):
-    import SQLWorker
-
-    Info = SQLWorker.GetMemInfo(member.id, member.guild.id)
-
+def CreateRank(member, info: Member):
     base = Image.open('src/Images/Rank.png')
 
     if os.path.exists("src/Images/Usr/{}/{}/profile.png".format(member.guild.id, member.id)):
-        bg = Image.open("src/Images/Usr/{}/{}/profile.png".format(member.guild.id, member.id))\
+        bg = Image.open("src/Images/Usr/{}/{}/profile.png".format(member.guild.id, member.id)) \
             .crop(box=(0, 70, 530, 70 + 188))
         bg.paste(base,
                  (0, 0),
@@ -168,10 +172,8 @@ def CreateRank(member):
         del bg
 
     Avatar = Image.open(
-        utils.GetAvatarFromUrl(
-            member.avatar_url_as(size=128)))
-    base.paste(Avatar,
-               (24, 34))
+        utils.GetAvatarFromUrl(GetAvatar(member).url))
+    base.paste(Avatar,(24, 34))
     del Avatar
 
     nik = member.name
@@ -194,7 +196,7 @@ def CreateRank(member):
                   base,
                   size=fontsize)
 
-    utils.AddText(str(Info[0]).rjust(3, '0') + "LV",
+    utils.AddText(str(info.Level).rjust(3, '0') + "LV",
                   (327, 97),
                   base,
                   color=(255, 90, 0),
@@ -204,15 +206,15 @@ def CreateRank(member):
                   (180, 62), base,
                   color=member.colour.to_rgb(),
                   size=18)
-    utils.AddText("XP:" + utils.ConvrterToCI(round(Info[4], 2)).rjust(7, '0'),
+    utils.AddText("XP:" + utils.ConvrterToCI(round(info.TotalXp, 2)).rjust(7, '0'),
                   (173, 97),
                   base,
                   color=(255, 90, 0),
                   size=18,
                   font="BONX-TubeBold.otf")
-    if Info[1] != 0:
+    if info.Xp != 0:
         zero = 2.16
-        Re = Info[1] / (Info[2] / 100)
+        Re = info.Xp / (info.MaxXp / 100)
         ImageDraw.Draw(base, 'RGBA').rectangle(
             [(174, 125), (174 + Re * zero, 154)],
             fill=(255, 90, 0, 255))
@@ -270,13 +272,14 @@ def GetTop(members, page):
     return base
 
 
-def CreateLevelUpMessage(memberAvatar, name, level: str):
-    Avatar = Image.open(utils.GetAvatarFromUrl(memberAvatar))
+def CreateLevelUpMessage(member:discord.Member, level: str):
+
+    Avatar = Image.open(utils.GetAvatarFromUrl(GetAvatar(member).url))
     Avatar.thumbnail((128, 128))
     base = Image.open('src/Images/LabmemberLevelUP.png')
     # ImageDraw.Draw(Avatar,'RGBA').rectangle([(0,0),(128,128)],fill=(0,255,0,70))
     base.paste(Avatar, (12, 11))
-    utils.AddText(name, (160, 85), base)
+    utils.AddText(member.name, (160, 85), base)
     utils.AddText(level.rjust(3, '0'),
                   (415, 30),
                   base,

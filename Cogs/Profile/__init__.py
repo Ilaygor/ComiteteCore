@@ -3,7 +3,7 @@ import re
 
 import discord
 from discord import MessageType
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, Option, message_command
 from discord.ext import commands
 from sqlalchemy import desc
 from . import XpSys
@@ -21,6 +21,19 @@ class Profile(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         XpSys.init()
+
+    @message_command(name="Получить профиль")
+    async def getProfile(self, ctx, message: discord.Message):
+        author = message.author
+        path = "Temp/{}.png".format(author.id)
+        info = session.query(Member).filter(Member.MemberId == author.id).filter(
+            Member.ServerId == author.guild.id).first()
+        PictureCreator.CreateProfile(author, info).save(path)
+
+        file = discord.File(path, filename="profile.png")
+        await ctx.send(file=file)
+
+        os.remove(path)
 
     @slash_command(
         name='profile',
@@ -98,6 +111,12 @@ class Profile(commands.Cog):
         await ctx.send(file=file)
         os.remove(path)
 
+    @message_command(name="Получить аватар")
+    async def getAvatar(self, ctx, message: discord.Message):
+        path = PictureCreator.utils.GetAvatarFromUrl(PictureCreator.GetAvatar(message.author, size=4096))
+        file = discord.File(path, filename="avatar.gif")
+        await ctx.send("Avatar " + message.author.name, file=file)
+
     @slash_command(
         name='avatar',
         description="Выводит аватар пользователя."
@@ -111,6 +130,17 @@ class Profile(commands.Cog):
         path = PictureCreator.utils.GetAvatarFromUrl(PictureCreator.GetAvatar(author, size=4096))
         file = discord.File(path, filename="avatar.gif")
         await ctx.send("Avatar " + author.name, file=file)
+
+    @message_command(name="Получить ранг")
+    async def getRank(self, ctx, message: discord.Message):
+        author = message.author
+        path = "Temp/{}.png".format(author.id)
+        info = session.query(Member).filter(Member.MemberId == author.id).filter(
+            Member.ServerId == author.guild.id).first()
+        PictureCreator.CreateRank(author, info).save(path)
+        file = discord.File(path, filename="profile.png")
+        await ctx.send(file=file)
+        os.remove(path)
 
     @slash_command(
         name='rank',

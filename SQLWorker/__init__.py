@@ -1,21 +1,23 @@
-from models.database import Session
-from models.Members import Member
-from sqlalchemy import func
-from sqlalchemy import over
 from sqlalchemy import desc
+
+from models.Members import Member
+from models.database import Session
+
 session = Session()
 
 
 def SetAlive(memberId, serverId):
-    member = session.query(Member).filter(Member.ServerId == serverId,
-                                          Member.MemberId == memberId).first()
+    member = session.query(Member)\
+        .filter(Member.ServerId == serverId)\
+        .filter(Member.MemberId == memberId).first()
     member.IsAlive = True
     session.commit()
 
 
 def SetDead(memberId, serverId):
-    member = session.query(Member).filter(Member.ServerId == serverId,
-                                          Member.MemberId == memberId).first()
+    member = session.query(Member)\
+        .filter(Member.ServerId == serverId)\
+        .filter(Member.MemberId == memberId).first()
     member.IsAlive = False
     session.commit()
 
@@ -25,8 +27,14 @@ def AddNewMem(serverId, memberId):
     session.add(member)
     session.commit()
 
-def GetRank(memberId, serverId):
-    members = session.query(Member, over(func.row_number())).filter(Member.ServerId == serverId).order_by(desc(Member.TotalXp))
 
-    for member, rownum in filter(lambda member: member[0].MemberId == memberId, members):
-        return rownum
+def GetRank(memberId, serverId):
+    members = session.query(Member)\
+        .filter(Member.ServerId == serverId)\
+        .filter(Member.IsAlive).order_by(desc(Member.TotalXp))
+    i = 0
+
+    for member in members:
+        i += 1
+        if member.MemberId == memberId and member.ServerId == serverId:
+            return i

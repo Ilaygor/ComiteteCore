@@ -67,7 +67,9 @@ class Admin(commands.Cog):
             return await ctx.send(embed=emb)
 
         # Проверяем не идёт ли уже голосование за мут
-        votum = session.query(Votum).filter(Votum.ServerId == ctx.guild.id, Votum.MemberId == member.id).first()
+        votum = session.query(Votum) \
+            .filter(Votum.ServerId == ctx.guild.id) \
+            .filter(Votum.MemberId == member.id).first()
         if votum:
             emb = discord.Embed(
                 title="Некорректный вызов",

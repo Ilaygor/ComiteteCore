@@ -59,21 +59,29 @@ class Okari(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if len(before.roles) < len(after.roles):
-            member = session.query(Member).filter(Member.MemberId == after.id, Member.ServerId == after.guild.id).first()
+            member = session.query(Member)\
+                .filter(Member.MemberId == after.id)\
+                .filter(Member.ServerId == after.guild.id).first()
             for i in after.roles:
                 if i in before.roles:
                     continue
-                role = session.query(RoleList).filter(RoleList.MemberId == member.Id, RoleList.RoleId == i.id).first()
+                role = session.query(RoleList)\
+                    .filter(RoleList.MemberId == member.Id)\
+                    .filter(RoleList.RoleId == i.id).first()
                 if not role:
                     role = RoleList(memberId=member.id, roleId=i.id)
                     session.add(role)
                     session.commit()
 
         if len(before.roles) > len(after.roles):
-            member = session.query(Member).filter(Member.MemberId == after.id, Member.ServerId == after.guild.id).first()
+            member = session.query(Member)\
+                .filter(Member.MemberId == after.id)\
+                .filter(Member.ServerId == after.guild.id).first()
             for i in before.roles:
                 if i not in after.roles:
-                    role = session.query(RoleList).filter(RoleList.MemberId == member.Id, RoleList.RoleId == i.id).first()
+                    role = session.query(RoleList)\
+                        .filter(RoleList.MemberId == member.Id)\
+                        .filter(RoleList.RoleId == i.id).first()
                     role.delete()
                     session.commit()
 
@@ -83,7 +91,9 @@ class Okari(commands.Cog):
             for i in after:
                 if i in before:
                     continue
-                emojie = session.query(Emojie).filter(Emojie.Id == i.id, Emojie.ServerId == guild.id).first()
+                emojie = session.query(Emojie)\
+                    .filter(Emojie.Id == i.id)\
+                    .filter(Emojie.ServerId == guild.id).first()
                 if not emojie:
                     emojie = Emojie(id=i.id, serverId=guild.id)
                     session.add(emojie)
@@ -92,7 +102,9 @@ class Okari(commands.Cog):
         if len(before) > len(after):
             for i in before:
                 if i not in after:
-                    emojie = session.query(Emojie).filter(Emojie.Id == i.id, Emojie.ServerId == guild.id).first()
+                    emojie = session.query(Emojie)\
+                        .filter(Emojie.Id == i.id)\
+                        .filter(Emojie.ServerId == guild.id).first()
                     emojie.Delete()
                     session.commit()
 

@@ -26,8 +26,9 @@ class Profile(commands.Cog):
     async def getProfile(self, ctx, message: discord.Message):
         author = message.author
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member).filter(Member.MemberId == author.id).filter(
-            Member.ServerId == author.guild.id).first()
+        info = session.query(Member)\
+            .filter(Member.MemberId == author.id)\
+            .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateProfile(author, info).save(path)
 
         file = discord.File(path, filename="profile.png")
@@ -48,8 +49,9 @@ class Profile(commands.Cog):
             author = ctx.author
 
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member).filter(Member.MemberId == author.id).filter(
-            Member.ServerId == author.guild.id).first()
+        info = session.query(Member)\
+            .filter(Member.MemberId == author.id)\
+            .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateProfile(author, info).save(path)
 
         file = discord.File(path, filename="profile.png")
@@ -135,8 +137,9 @@ class Profile(commands.Cog):
     async def getRank(self, ctx, message: discord.Message):
         author = message.author
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member).filter(Member.MemberId == author.id).filter(
-            Member.ServerId == author.guild.id).first()
+        info = session.query(Member)\
+            .filter(Member.MemberId == author.id)\
+            .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateRank(author, info).save(path)
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
@@ -153,8 +156,9 @@ class Profile(commands.Cog):
             author = ctx.author
 
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member).filter(Member.MemberId == author.id).filter(
-            Member.ServerId == author.guild.id).first()
+        info = session.query(Member)\
+            .filter(Member.MemberId == author.id)\
+            .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateRank(author, info).save(path)
         file = discord.File(path, filename="profile.png")
         await ctx.send(file=file)
@@ -224,8 +228,9 @@ class Profile(commands.Cog):
     async def on_message(self, message):
         if message.author.bot or message.type == MessageType.new_member:
             return
-        ignoreList = session.query(IgnoreList).filter(IgnoreList.ServerId == message.guild.id).filter(
-            IgnoreList.ChannelId == message.channel.id).first()
+        ignoreList = session.query(IgnoreList)\
+            .filter(IgnoreList.ServerId == message.guild.id)\
+            .filter(IgnoreList.ChannelId == message.channel.id).first()
         if not ignoreList:
             if len(message.mentions):
                 for i in list(set(message.mentions)):
@@ -238,7 +243,9 @@ class Profile(commands.Cog):
             for emoji in list(set(re.findall("<\D+\d+>", message.content))):
                 try:
                     emj = await commands.EmojiConverter().convert(ctx, emoji)
-                    emojie = session.query(Emojie).filter(Emojie.ServerId == emj.guild.id, Emojie.Id == emj.id).first()
+                    emojie = session.query(Emojie)\
+                        .filter(Emojie.ServerId == emj.guild.id)\
+                        .filter(Emojie.Id == emj.id).first()
                     if emojie:
                         emojie.IncrementUsage()
                     else:

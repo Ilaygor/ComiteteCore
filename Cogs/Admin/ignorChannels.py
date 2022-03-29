@@ -28,7 +28,9 @@ async def list(ctx):
 
 async def add(ctx, channel):
     ch = await commands.TextChannelConverter().convert(ctx, channel)
-    channelSql = session.query(IgnoreList).filter(IgnoreList.ServerId == ctx.guild.id, IgnoreList.ChannelId == ch.id).first()
+    channelSql = session.query(IgnoreList)\
+        .filter(IgnoreList.ServerId == ctx.guild.id)\
+        .filter(IgnoreList.ChannelId == ch.id).first()
     if not channelSql:
         newList = IgnoreList(channelId=ch.id, serverId=ctx.guild.id)
         session.add(newList)
@@ -41,7 +43,9 @@ async def add(ctx, channel):
 
 async def remove(ctx, channel):
     ch = await TextChannelConverter().convert(ctx, channel)
-    channelSql = session.query(IgnoreList).filter(IgnoreList.ServerId == ctx.guild.id, IgnoreList.ChannelId == ch.id).first()
+    channelSql = session.query(IgnoreList)\
+        .filter(IgnoreList.ServerId == ctx.guild.id)\
+        .filter(IgnoreList.ChannelId == ch.id).first()
     if channelSql:
         session.delete(channelSql)
         session.commit()

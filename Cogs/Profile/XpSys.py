@@ -18,7 +18,9 @@ def init():
 
 
 def AddMem(memberId, serverId):
-    member = session.query(Member).filter(Member.MemberId == memberId, Member.ServerId == serverId)
+    member = session.query(Member)\
+        .filter(Member.MemberId == memberId)\
+        .filter(Member.ServerId == serverId)
     UsersData[serverId, memberId] = member
 
 

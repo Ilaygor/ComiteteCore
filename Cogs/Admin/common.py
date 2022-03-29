@@ -51,7 +51,9 @@ def checkMembersOnServer(guild):
 
 def addEmojies(guild):
     for emoji in guild.emojis:
-        emojieSql = session.query(Emojie).filter(Emojie.ServerId == guild.id, Emojie.Id == emoji.id).first()
+        emojieSql = session.query(Emojie)\
+            .filter(Emojie.ServerId == guild.id)\
+            .filter(Emojie.Id == emoji.id).first()
         if not emojieSql:
             newEmojie = Emojie(serverId=guild.id, id=emoji.id)
             session.add(newEmojie)
@@ -64,7 +66,9 @@ def addRoles(guild):
             if role.is_default():
                 continue
 
-            roleList = session.query(RoleList).filter(RoleList.RoleId == role.id, RoleList.MemberId == mem.id).first()
+            roleList = session.query(RoleList)\
+                .filter(RoleList.RoleId == role.id)\
+                .filter(RoleList.MemberId == mem.id).first()
             if not roleList:
                 newRole = RoleList(roleId=role.id, memberId=mem.id)
                 session.add(newRole)

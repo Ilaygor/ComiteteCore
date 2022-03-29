@@ -9,8 +9,10 @@ class Cleaner(commands.Cog):
 
     @slash_command(name='clear', description="Чистит канал от сообщений ботов.")
     async def clear(self, ctx,
-                    channel: Option(discord.TextChannel, 'Выберите пользователя, которому выдаём Вотум', required=False, default=None),
-                    count: Option(int, 'Число последний сообщений, которые нужно удалить', required=False, default=10, min_value=1, max_value=500)):
+                    channel: Option(discord.TextChannel, 'Выберите пользователя, которому выдаём Вотум',
+                                    required=False, default=None),
+                    count: Option(int, 'Число последний сообщений, которые нужно удалить',
+                                  required=False, default=10, min_value=1, max_value=500)):
         if not channel:
             channel = ctx.channel
         async for i in channel.history(limit=int(count)):

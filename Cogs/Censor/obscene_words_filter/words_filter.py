@@ -31,7 +31,7 @@ class ObsceneWordsFilter(object):
     def mask_bad_words(self, text):
         for match in self.find_bad_word_matches_without_good_words(text):
             start, end = match.span()
-            text = self.mask_text_range(text, start, end)
+            text = self.mask_text_range(text, start+1, end)
         return text
 
     @staticmethod

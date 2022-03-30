@@ -19,7 +19,8 @@ class Censor(commands.Cog):
         f = ObsceneWordsFilter(conf.bad_words_re, conf.good_words_re)
         returning = f.mask_bad_words(message.content)
         if returning != message.content:
-            await message.reply(content=message.author.name + ":\n" + returning)
+            print(message.content)
+            await message.channel.send(content=message.author.name + ":\n" + returning)
             await message.delete()
 
 

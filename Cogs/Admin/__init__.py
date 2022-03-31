@@ -4,7 +4,7 @@ import logging
 import discord
 from discord import Client
 from discord.ext import commands, tasks
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, Option, permissions
 
 from models.Votums import Votum
 from models.Members import Member
@@ -27,13 +27,16 @@ def is_owner():
 
 
 votumList = {}
-
+guilds = []
 
 class Admin(commands.Cog):
     def __init__(self, bot: Client):
         self.bot = bot
         self.init()
         self.votumTask.start()
+
+        for server in session.query(Server):
+            guilds.append(server.Id)
 
     @staticmethod
     def init():
@@ -120,58 +123,55 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     # Устанавливает информационный канал
-    @is_owner()
-    @commands.command(name="setinfo", help="Задаёт канал для вывода сообщений об приходе/уходе/возвращение "
-                                           "пользователей.", usage="ПингКанала", brief="Устанавливает информационный "
-                                                                                       "канал")
-    async def setInfo(self, ctx, channel):
-        ch = await commands.TextChannelConverter().convert(ctx, channel)
+    @slash_command(name="setinfo", guild_id=guilds, default_permission=False,
+                   description="Задаёт канал для вывода сообщений об приходе/уходе/возвращение пользователей.")
+    @permissions.is_owner()
+    async def setInfo(self, ctx,
+                      channel: Option(discord.TextChannel, "Выбрите текстовый канал", required=False, default=None)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
-        server.InfoChannel = ch.id
+        if channel:
+            server.InfoChannel = channel.id
+        else:
+            server.InfoChannel = ""
         session.commit()
-        await ctx.send("InfoChannel: {}".format(channel))
+        await ctx.send("InfoChannel: {}".format(channel.name))
 
     # Устанавливает роль новичков
-    @is_owner()
-    @commands.command(name="setjoinrole", help="Задаёт роль для пользовтелей который только-что присоединились.",
-                      usage="Название роли", brief="Устанавливает роль для новичков")
-    async def setJoinRole(self, ctx, roleName=None):
+    @slash_command(name="setjoinrole", guild_id=guilds, default_permission=False,
+                   description="Задаёт роль для пользовтелей который только-что присоединились.")
+    @permissions.is_owner()
+    async def setJoinRole(self, ctx,
+                          role: Option(discord.Role, "Выберите роль для новичков", required=False, default=None)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
-        if roleName:
-            role = await commands.RoleConverter().convert(ctx, roleName)
+        if role:
             server.JoinRole = role.id
-            session.commit()
-            await ctx.send("Join role changed to: {}".format(roleName))
+            await ctx.send("Join role changed to: {}".format(role.name))
         else:
-            server.JoinRole = roleName
-            session.commit()
+            server.JoinRole = ""
             await ctx.send("Join role cleared")
+        session.commit()
 
     # Устанавливает название участника сервера
-    @is_owner()
-    @commands.command(name="setmemname",
-                      help="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.",
-                      usage="[Строка обозначающее имя участника канала == Member]",
-                      brief="Устанавливает имя участника сервера")
-    async def setMemName(self, ctx, name="Member"):
+    @slash_command(name="setmemname", guild_id=guilds, default_permission=False,
+                   description="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.")
+    @permissions.is_owner()
+    async def setMemName(self, ctx, name: Option(str, "Строка обозначающее имя участника канала",
+                                                 default="Member", required=False)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
         server.MemberName = name
         session.commit()
         await ctx.send("Member name changed to: {}".format(name))
 
     # Устанавливает текст при бане пользователя на сервере
-    @is_owner()
-    @commands.command(name="setbantext", help="Устанавливает текст при бане пользователя на сервере.",
-                      usage="[Сроки обозначающие, что пользовтатель был забанен == has been banned.]",
-                      brief="Устанавливает текст при бане пользователя на сервере.")
-    async def setBanText(self, ctx, *args):
+    @slash_command(name="setbantext", guild_id=guilds, default_permission=False,
+                   description="Устанавливает текст при бане пользователя на сервере.")
+    @permissions.is_owner()
+    async def setBanText(self, ctx, bantext: Option(str, "Сроки обозначающие, что пользовтатель был забанен",
+                                                    default="has been banned.", required=False)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
-        text = ' '.join(args)
-        if len(text) == 0:
-            text = 'has been banned.'
-        server.BanText = text
+        server.BanText = bantext
         session.commit()
-        await ctx.send("Ban text changed for: {}".format(text))
+        await ctx.send("Ban text changed for: {}".format(bantext))
 
     # Подключение к серверу
     @commands.Cog.listener()
@@ -184,16 +184,16 @@ class Admin(commands.Cog):
             session.add(server)
             session.commit()
             common.addMembersOnServer(guild)
+            guilds.append(guild.id)
         else:
             common.checkMembersOnServer(guild)
         common.addRoles(guild)
         common.addEmojies(guild)
 
     # аudit
-    @is_owner()
-    @commands.command(name="audit", help="Производит аудит пользователей сервера, т.е. смотрит какие пользователи "
-                                         "присутсвуют, а какие отсутсвуют и производит учёт.\n Полезно, когда пришёл "
-                                         "новый пользователь, а бот был в отключке.", usage="", brief="Аудит сервера")
+    @slash_command(name="audit", guild_id=guilds, default_permission=False,
+                   description="Производит аудит пользователей сервера и синхронизирует с бд бота.")
+    @permissions.is_owner()
     async def audit(self, ctx):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
         if not server:
@@ -208,26 +208,22 @@ class Admin(commands.Cog):
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")
 
-    @is_owner()
-    @commands.command(name="ignor",
-                      help="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах админа "
-                           "сервера.\nНапример добавьте в игнор-лист каналы в которых предназначенные для флуда или "
-                           "каналы предназначенные для ботов.\nДействия:\n> list - выводит список игнорируемых "
-                           "каналов.\n> add - добавляет канал в список игнорируемых каналов, требует пинг канала.\n> "
-                           "rem - девушка с голубыми волосами, близнец ram... Не та Информация, т.е. данное действие "
-                           "отвечает за удаление канала из игнор листа, требует пинг канала.",
-                      usage="[Действие == list] [Канал]", brief="Игнор-лист")
-    async def ignor(self, ctx, action: str = "list", channel=None):
-        if action == "list":
+    @slash_command(name="ignor", guild_id=guilds, default_permission=False,
+                   description="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах.")
+    @permissions.is_owner()
+    async def ignor(self, ctx,
+                    action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"], default="Список"),
+                    channel: Option(discord.TextChannel, "Канал который добавить/удалить из списка", required=False, default=None)):
+        if action == "Список":
             embed = await ignorChannels.list(ctx)
             await ctx.send(embed=embed)
-        elif action == "add":
+        elif action == "Добавить":
             if channel:
                 embed = await ignorChannels.add(ctx, channel)
                 await ctx.send(embed=embed)
             else:
                 await ctx.send("Не указан канал!")
-        elif action == "rem":
+        elif action == "Удалить":
             if channel:
                 embed = await ignorChannels.remove(ctx, channel)
                 await ctx.send(embed=embed)
@@ -236,9 +232,9 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Неизвестное действие.")
 
-    @is_owner()
-    @commands.command(name="emojistat", help="Выводит статистику использования серверных эмоджи.", usage="",
-                      brief="Выводит статистику использования серверных эмоджи.")
+    @slash_command(name="emojistat", guild_id=guilds, default_permission=False,
+                   description="Выводит статистику использования серверных эмоджи.")
+    @permissions.is_owner()
     async def emojiStat(self, ctx):
         emojies = {}
         for i in ctx.guild.emojis:

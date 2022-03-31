@@ -8,7 +8,7 @@ logging.basicConfig(filename="Bot.log", level=logging.INFO)
 
 intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix='!', description='Amadeus Kurisu', intents=intents)
+client = commands.Bot(description='Amadeus Kurisu', intents=intents)
 
 @client.event
 async def on_ready():

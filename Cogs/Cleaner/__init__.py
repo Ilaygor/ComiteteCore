@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.commands import slash_command, Option
+from discord.commands import permissions
 
 
 class Cleaner(commands.Cog):
@@ -9,6 +10,20 @@ class Cleaner(commands.Cog):
 
     @slash_command(name='clear', description="Чистит канал от сообщений ботов.")
     async def clear(self, ctx,
+                    channel: Option(discord.TextChannel, 'Выберите пользователя, которому выдаём Вотум',
+                                    required=False, default=None),
+                    count: Option(int, 'Число последний сообщений, которые нужно удалить',
+                                  required=False, default=10, min_value=1, max_value=500)):
+        if not channel:
+            channel = ctx.channel
+        async for i in channel.history(limit=int(count)):
+            if i.author.id == self.bot.user.id:
+                await i.delete()
+        return await ctx.send("Чат очищен успешно")
+
+    @slash_command(name='purge', description="Чистит канал от сообщений пользователей.", default_permission=False,
+                   permissions=[permissions.CommandPermission(id="moderator", type=8192, permission=True)])
+    async def purge(self, ctx,
                     channel: Option(discord.TextChannel, 'Выберите пользователя, которому выдаём Вотум',
                                     required=False, default=None),
                     count: Option(int, 'Число последний сообщений, которые нужно удалить',

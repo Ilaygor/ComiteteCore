@@ -27,7 +27,7 @@ class Memory(commands.Cog):
 
     @slash_command(
         name='memory',
-        description="Выводит последние сообщения.",
+        description="Выводит удалённые сообщения.",
     )
     async def memory(self, ctx,
                      channel: Option(discord.TextChannel, "Выбреите канал", required=True),
@@ -74,7 +74,7 @@ class Memory(commands.Cog):
         await paginator.respond(ctx.interaction)
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message_delete(self, message: discord.Message):
         if message.author.bot or message.type == MessageType.new_member:
             return
         if len(message.content) == 0:

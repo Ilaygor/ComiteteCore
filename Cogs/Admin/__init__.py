@@ -41,7 +41,7 @@ class Admin(commands.Cog):
             guilds.append(server.Id)
 
     settings = SlashCommandGroup("setting", "Настройки бота. Admin only!",
-                                 permissions=[CommandPermission("owner", 2, True)], )
+                                 permissions=[CommandPermission("owner", 2, True)], guild_ids=guilds)
 
     @staticmethod
     def init():
@@ -128,7 +128,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     # Устанавливает информационный канал
-    @settings.command(name="info", guild_id=guilds, default_permission=False,
+    @settings.command(name="info", guild_id=guilds, default_permission=False, permissions=[CommandPermission("owner", 2, True)],
                       description="Задаёт канал для вывода сообщений об приходе/уходе/возвращение пользователей.")
     async def setInfo(self, ctx,
                       channel: Option(discord.TextChannel, "Выбрите текстовый канал", required=False, default=None)):
@@ -141,7 +141,7 @@ class Admin(commands.Cog):
         await ctx.send("InfoChannel: {}".format(channel.name))
 
     # Устанавливает роль новичков
-    @settings.command(name="joinrole", guild_id=guilds, default_permission=False,
+    @settings.command(name="joinrole", guild_id=guilds, permissions=[CommandPermission("owner", 2, True)], default_permission=False,
                       description="Задаёт роль для пользовтелей который только-что присоединились.")
     async def setJoinRole(self, ctx,
                           role: Option(discord.Role, "Выберите роль для новичков", required=False, default=None)):
@@ -155,7 +155,7 @@ class Admin(commands.Cog):
         session.commit()
 
     # Устанавливает название участника сервера
-    @settings.command(name="memname", guild_id=guilds, default_permission=False,
+    @settings.command(name="memname", guild_id=guilds, permissions=[CommandPermission("owner", 2, True)], default_permission=False,
                       description="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.")
     async def setMemName(self, ctx, name: Option(str, "Строка обозначающее имя участника канала",
                                                  default="Member", required=False)):
@@ -165,7 +165,7 @@ class Admin(commands.Cog):
         await ctx.send("Member name changed to: {}".format(name))
 
     # Устанавливает текст при бане пользователя на сервере
-    @slash_command(name="setbantext", guild_id=guilds, default_permission=False,
+    @slash_command(name="bantext", permissions=[CommandPermission("owner", 2, True)], guild_id=guilds, default_permission=False,
                    description="Устанавливает текст при бане пользователя на сервере.")
     @permissions.is_owner()
     async def setBanText(self, ctx, bantext: Option(str, "Сроки обозначающие, что пользовтатель был забанен",
@@ -193,7 +193,7 @@ class Admin(commands.Cog):
         common.addEmojies(guild)
 
     # аudit
-    @settings.command(name="audit", guild_id=guilds, default_permission=False,
+    @settings.command(name="audit", guild_id=guilds, permissions=[CommandPermission("owner", 2, True)], default_permission=False,
                       description="Производит аудит пользователей сервера и синхронизирует с бд бота.")
 
     async def audit(self, ctx):
@@ -210,7 +210,7 @@ class Admin(commands.Cog):
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")
 
-    @settings.command(name="ignor", guild_id=guilds, default_permission=False,
+    @settings.command(name="ignor", guild_id=guilds, permissions=[CommandPermission("owner", 2, True)], default_permission=False,
                       description="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах.")
     async def ignor(self, ctx,
                     action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"],
@@ -235,7 +235,7 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Неизвестное действие.")
 
-    @settings.command(name="boost", guild_id=guilds, default_permission=False,
+    @settings.command(name="boost", guild_id=guilds, permissions=[CommandPermission("owner", 2, True)], default_permission=False,
                       description="Boost-лист каналов где присваивается х2 опыт.")
     async def boost(self, ctx,
                     action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"],

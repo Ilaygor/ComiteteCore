@@ -240,10 +240,16 @@ class Profile(commands.Cog):
 
             xp = len(message.content) / 10
 
-            if session.query(BoostList) \
-                    .filter(BoostList.ChannelId == message.channel.id) \
-                    .filter(BoostList.ServerId == message.guild.id).first():
-                xp *= 2
+            try:
+                if session.query(BoostList) \
+                        .filter(BoostList.ChannelId == message.channel.parent.id) \
+                        .filter(BoostList.ServerId == message.guild.id).first():
+                    xp *= 2
+            except AttributeError:
+                if session.query(BoostList) \
+                        .filter(BoostList.ChannelId == message.channel.id) \
+                        .filter(BoostList.ServerId == message.guild.id).first():
+                    xp *= 2
 
             await XpSys.AddExp(memberId=message.author.id, ServerID=message.guild.id, count=xp, channel=message.channel)
 

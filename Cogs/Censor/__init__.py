@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord.ext import commands
 
@@ -9,6 +11,7 @@ from Cogs.Censor.obscene_words_filter.words_filter import ObsceneWordsFilter
 
 session = Session()
 
+logging.basicConfig(filename="censor.log", level=logging.INFO)
 
 class Censor(commands.Cog):
     def __init__(self, bot):

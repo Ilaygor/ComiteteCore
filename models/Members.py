@@ -4,7 +4,7 @@ from models.database import Base
 
 class Member(Base):
     __tablename__ = 'Members'
-    Id = Column(Integer, primary_key=True)
+    Id = Column(Integer, primary_key=True, autoincrement=True)
     MemberId = Column(Integer)
     ServerId = Column(Integer, ForeignKey('Servers.Id', ondelete='CASCADE'))
     __table_args__ = (UniqueConstraint('ServerId', 'MemberId'),)

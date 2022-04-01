@@ -7,7 +7,7 @@ from models.database import Base
 
 class IgnoreList(Base):
     __tablename__ = 'IgnoreLists'
-    Id = Column(Integer, primary_key=True)
+    Id = Column(Integer, primary_key=True, autoincrement=True)
     ChannelId = Column(Integer)
     ServerId = Column(Integer, ForeignKey('Servers.Id', ondelete='CASCADE'))
     __table_args__ = (UniqueConstraint('ChannelId', 'ServerId'),)

@@ -13,6 +13,7 @@ from models.Emojies import Emojie
 from models.IgnorLists import IgnoreList
 from models.Members import Member
 from models.database import Session
+from models.BoostLists import BoostList
 
 session = Session()
 
@@ -26,8 +27,8 @@ class Profile(commands.Cog):
     async def getProfile(self, ctx, message: discord.Message):
         author = message.author
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member)\
-            .filter(Member.MemberId == author.id)\
+        info = session.query(Member) \
+            .filter(Member.MemberId == author.id) \
             .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateProfile(author, info).save(path)
 
@@ -49,8 +50,8 @@ class Profile(commands.Cog):
             author = ctx.author
 
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member)\
-            .filter(Member.MemberId == author.id)\
+        info = session.query(Member) \
+            .filter(Member.MemberId == author.id) \
             .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateProfile(author, info).save(path)
 
@@ -137,8 +138,8 @@ class Profile(commands.Cog):
     async def getRank(self, ctx, message: discord.Message):
         author = message.author
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member)\
-            .filter(Member.MemberId == author.id)\
+        info = session.query(Member) \
+            .filter(Member.MemberId == author.id) \
             .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateRank(author, info).save(path)
         file = discord.File(path, filename="profile.png")
@@ -156,8 +157,8 @@ class Profile(commands.Cog):
             author = ctx.author
 
         path = "Temp/{}.png".format(author.id)
-        info = session.query(Member)\
-            .filter(Member.MemberId == author.id)\
+        info = session.query(Member) \
+            .filter(Member.MemberId == author.id) \
             .filter(Member.ServerId == author.guild.id).first()
         PictureCreator.CreateRank(author, info).save(path)
         file = discord.File(path, filename="profile.png")
@@ -181,9 +182,9 @@ class Profile(commands.Cog):
 
         page -= 1
         if cat == 'Опыт':
-            for member in session.query(Member)\
-                    .filter(Member.IsAlive)\
-                    .filter(Member.ServerId == ctx.guild.id)\
+            for member in session.query(Member) \
+                    .filter(Member.IsAlive) \
+                    .filter(Member.ServerId == ctx.guild.id) \
                     .order_by(desc(Member.TotalXp)).limit(5).offset(5 * page):
                 mem = ctx.guild.get_member(member.MemberId)
                 members.append({
@@ -192,9 +193,9 @@ class Profile(commands.Cog):
                     "url": PictureCreator.GetAvatar(mem, size=64)
                 })
         elif cat == "Упоминания":
-            for member in session.query(Member)\
-                    .filter(Member.IsAlive)\
-                    .filter(Member.ServerId == ctx.guild.id)\
+            for member in session.query(Member) \
+                    .filter(Member.IsAlive) \
+                    .filter(Member.ServerId == ctx.guild.id) \
                     .order_by(desc(Member.Mentions)).limit(5).offset(5 * page):
                 mem = ctx.guild.get_member(member.MemberId)
                 members.append({
@@ -203,8 +204,8 @@ class Profile(commands.Cog):
                     "data": str(member.Mentions) + " mentions"
                 })
         elif cat == "Эмоджи":
-            for emojie in session.query(Emojie)\
-                    .filter(Emojie.ServerId == ctx.guild.id)\
+            for emojie in session.query(Emojie) \
+                    .filter(Emojie.ServerId == ctx.guild.id) \
                     .order_by(desc(Emojie.CountUsage)).limit(5).offset(5 * page):
                 emoji = await ctx.guild.fetch_emoji(emojie.Id)
                 members.append({
@@ -228,8 +229,8 @@ class Profile(commands.Cog):
     async def on_message(self, message):
         if message.author.bot or message.type == MessageType.new_member:
             return
-        ignoreList = session.query(IgnoreList)\
-            .filter(IgnoreList.ServerId == message.guild.id)\
+        ignoreList = session.query(IgnoreList) \
+            .filter(IgnoreList.ServerId == message.guild.id) \
             .filter(IgnoreList.ChannelId == message.channel.id).first()
         if not ignoreList:
             if len(message.mentions):
@@ -237,14 +238,21 @@ class Profile(commands.Cog):
                     if not i.bot and not message.author.bot and not i.id == message.author.id:
                         XpSys.AddMention(memberId=i.id, serverId=message.guild.id)
 
-            await XpSys.AddExp(memberId=message.author.id, ServerID=message.guild.id, count=len(message.content) / 10, channel=message.channel)
+            xp = len(message.content) / 10
+
+            if session.query(BoostList) \
+                    .filter(BoostList.ChannelId == message.channel.id) \
+                    .filter(BoostList.ServerId == message.guild.id).first():
+                xp *= 2
+
+            await XpSys.AddExp(memberId=message.author.id, ServerID=message.guild.id, count=xp, channel=message.channel)
 
             ctx = await self.bot.get_context(message)
             for emoji in list(set(re.findall("<\D+\d+>", message.content))):
                 try:
                     emj = await commands.EmojiConverter().convert(ctx, emoji)
-                    emojie = session.query(Emojie)\
-                        .filter(Emojie.ServerId == emj.guild.id)\
+                    emojie = session.query(Emojie) \
+                        .filter(Emojie.ServerId == emj.guild.id) \
                         .filter(Emojie.Id == emj.id).first()
                     if emojie:
                         emojie.IncrementUsage()

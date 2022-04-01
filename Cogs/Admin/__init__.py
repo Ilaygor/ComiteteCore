@@ -13,7 +13,7 @@ from models.Members import Member
 from models.Servers import Server
 from models.Votums import Votum
 from models.database import Session
-from . import common, ignorChannels
+from . import common, ignorChannels, boostChannels
 
 logging.basicConfig(filename="admin.log", level=logging.INFO)
 
@@ -229,6 +229,31 @@ class Admin(commands.Cog):
         elif action == "Удалить":
             if channel:
                 embed = await ignorChannels.remove(ctx, channel)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send("Не указан канал!")
+        else:
+            await ctx.send("Неизвестное действие.")
+
+    @settings.command(name="boost", guild_id=guilds, default_permission=False,
+                      description="Boost-лист каналов где присваивается х2 опыт.")
+    async def boost(self, ctx,
+                    action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"],
+                                   default="Список"),
+                    channel: Option(discord.TextChannel, "Канал который добавить/удалить из списка", required=False,
+                                    default=None)):
+        if action == "Список":
+            embed = await boostChannels.list(ctx)
+            await ctx.send(embed=embed)
+        elif action == "Добавить":
+            if channel:
+                embed = await boostChannels.add(ctx, channel)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send("Не указан канал!")
+        elif action == "Удалить":
+            if channel:
+                embed = await boostChannels.remove(ctx, channel)
                 await ctx.send(embed=embed)
             else:
                 await ctx.send("Не указан канал!")

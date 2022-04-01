@@ -3,15 +3,16 @@ import logging
 
 import discord
 from discord import Client
+from discord.commands import slash_command, Option, permissions, SlashCommandGroup, CommandPermission
 from discord.ext import commands, tasks
-from discord.commands import slash_command, Option, permissions
+from discord.ext.pages import Paginator, Page
+from sqlalchemy import desc
 
-from models.Votums import Votum
+from models.Emojies import Emojie
 from models.Members import Member
 from models.Servers import Server
-from models.Emojies import Emojie
+from models.Votums import Votum
 from models.database import Session
-
 from . import common, ignorChannels
 
 logging.basicConfig(filename="admin.log", level=logging.INFO)
@@ -29,6 +30,7 @@ def is_owner():
 votumList = {}
 guilds = []
 
+
 class Admin(commands.Cog):
     def __init__(self, bot: Client):
         self.bot = bot
@@ -37,6 +39,9 @@ class Admin(commands.Cog):
 
         for server in session.query(Server):
             guilds.append(server.Id)
+
+    settings = SlashCommandGroup("setting", "Настройки бота. Admin only!",
+                                 permissions=[CommandPermission("owner", 2, True)], )
 
     @staticmethod
     def init():
@@ -123,9 +128,8 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     # Устанавливает информационный канал
-    @slash_command(name="setinfo", guild_id=guilds, default_permission=False,
-                   description="Задаёт канал для вывода сообщений об приходе/уходе/возвращение пользователей.")
-    @permissions.is_owner()
+    @settings.command(name="info", guild_id=guilds, default_permission=False,
+                      description="Задаёт канал для вывода сообщений об приходе/уходе/возвращение пользователей.")
     async def setInfo(self, ctx,
                       channel: Option(discord.TextChannel, "Выбрите текстовый канал", required=False, default=None)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
@@ -137,9 +141,8 @@ class Admin(commands.Cog):
         await ctx.send("InfoChannel: {}".format(channel.name))
 
     # Устанавливает роль новичков
-    @slash_command(name="setjoinrole", guild_id=guilds, default_permission=False,
-                   description="Задаёт роль для пользовтелей который только-что присоединились.")
-    @permissions.is_owner()
+    @settings.command(name="joinrole", guild_id=guilds, default_permission=False,
+                      description="Задаёт роль для пользовтелей который только-что присоединились.")
     async def setJoinRole(self, ctx,
                           role: Option(discord.Role, "Выберите роль для новичков", required=False, default=None)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
@@ -152,9 +155,8 @@ class Admin(commands.Cog):
         session.commit()
 
     # Устанавливает название участника сервера
-    @slash_command(name="setmemname", guild_id=guilds, default_permission=False,
-                   description="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.")
-    @permissions.is_owner()
+    @settings.command(name="memname", guild_id=guilds, default_permission=False,
+                      description="Устанавливает называние при приходе/уходе/возвращение пользователей на сервер.")
     async def setMemName(self, ctx, name: Option(str, "Строка обозначающее имя участника канала",
                                                  default="Member", required=False)):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
@@ -191,9 +193,9 @@ class Admin(commands.Cog):
         common.addEmojies(guild)
 
     # аudit
-    @slash_command(name="audit", guild_id=guilds, default_permission=False,
-                   description="Производит аудит пользователей сервера и синхронизирует с бд бота.")
-    @permissions.is_owner()
+    @settings.command(name="audit", guild_id=guilds, default_permission=False,
+                      description="Производит аудит пользователей сервера и синхронизирует с бд бота.")
+
     async def audit(self, ctx):
         server = session.query(Server).filter(Server.Id == ctx.guild.id).first()
         if not server:
@@ -208,12 +210,13 @@ class Admin(commands.Cog):
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")
 
-    @slash_command(name="ignor", guild_id=guilds, default_permission=False,
-                   description="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах.")
-    @permissions.is_owner()
+    @settings.command(name="ignor", guild_id=guilds, default_permission=False,
+                      description="Игнор-лист, для того чтобы бот не защитывал XP, упоминания или эмодзи в каналах.")
     async def ignor(self, ctx,
-                    action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"], default="Список"),
-                    channel: Option(discord.TextChannel, "Канал который добавить/удалить из списка", required=False, default=None)):
+                    action: Option(str, "Выберите раздел", required=True, choices=["Список", "Добавить", "Удалить"],
+                                   default="Список"),
+                    channel: Option(discord.TextChannel, "Канал который добавить/удалить из списка", required=False,
+                                    default=None)):
         if action == "Список":
             embed = await ignorChannels.list(ctx)
             await ctx.send(embed=embed)
@@ -232,27 +235,47 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Неизвестное действие.")
 
-    @slash_command(name="emojistat", guild_id=guilds, default_permission=False,
+    @slash_command(name="emojistat",
                    description="Выводит статистику использования серверных эмоджи.")
-    @permissions.is_owner()
-    async def emojiStat(self, ctx):
+    async def emojiStat(self, ctx: discord.ApplicationContext):
+        pages = []
+
         emojies = {}
         for i in ctx.guild.emojis:
             emojies.update({i.id: i})
 
-        for emojie in session.query(Emojie).filter(Emojie.ServerId == ctx.guild.id):
+        iter = 0
+
+        for emojie in session.query(Emojie).filter(Emojie.ServerId == ctx.guild.id).order_by(desc(Emojie.CountUsage)):
             emoji = emojies.get(emojie.Id)
             if emoji:
+                iter += 1
                 embed = discord.Embed(title=emoji.name)
                 embed.set_thumbnail(url=emoji.url)
                 embed.add_field(name="Кол-во:",
                                 value=emojie.CountUsage,
                                 inline=True)
-                import datetime
                 embed.add_field(name="Последнее использование:",
                                 value=str(emojie.LastUsage),
                                 inline=True)
-                await ctx.send(embed=embed)
+                if iter == 1:
+                    page = Page(embeds=[embed])
+                else:
+                    page.embeds.append(embed)
+                if iter == 5:
+                    pages.append(page)
+                    iter = 0
+        try:
+            if pages.count(page) == 0:
+                pages.append(page)
+        except UnboundLocalError:
+            return
+
+        if len(pages) == 0:
+            return
+
+        paginator = Paginator(pages=pages, loop_pages=True, disable_on_timeout=True, timeout=360)
+        await paginator.respond(ctx.interaction)
 
 
 def setup(client):

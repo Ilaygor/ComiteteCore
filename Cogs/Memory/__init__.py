@@ -37,7 +37,7 @@ class Memory(commands.Cog):
             .filter(Message.MemberId == Member.Id)
 
         if member:
-            messages = messages.filter(Message.MemberId == member.id)
+            messages = messages.filter(Member.MemberId == member.id)
 
         pages = []
 
@@ -61,8 +61,11 @@ class Memory(commands.Cog):
                 pages.append(page)
                 iter = 0
 
-        if pages.count(page) == 0:
-            pages.append(page)
+        try:
+            if pages.count(page) == 0:
+                pages.append(page)
+        except UnboundLocalError:
+            return
 
         if len(pages) == 0:
             return

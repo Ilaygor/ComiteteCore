@@ -1,8 +1,5 @@
-from datetime import datetime
-
 import discord
 from discord.ext import commands
-from discord.ext.commands import TextChannelConverter
 
 from models.IgnorLists import IgnoreList
 from models.database import Session
@@ -42,14 +39,13 @@ async def add(ctx, channel):
 
 
 async def remove(ctx, channel):
-    ch = await TextChannelConverter().convert(ctx, channel)
     channelSql = session.query(IgnoreList)\
         .filter(IgnoreList.ServerId == ctx.guild.id)\
-        .filter(IgnoreList.ChannelId == ch.id).first()
+        .filter(IgnoreList.ChannelId == channel.id).first()
     if channelSql:
         session.delete(channelSql)
         session.commit()
-        embed = discord.Embed(title="Канал {} успешно удалён из списока игнора.".format(ch.name))
+        embed = discord.Embed(title="Канал {} успешно удалён из списока игнора.".format(channel.name))
     else:
-        embed = discord.Embed(title="Канал {} отсутсвует в списоке игнора.".format(ch.name))
+        embed = discord.Embed(title="Канал {} отсутсвует в списоке игнора.".format(channel.name))
     return embed

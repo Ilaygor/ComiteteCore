@@ -10,7 +10,7 @@ from models.Members import Member
 from models.database import Session
 from discord.commands import slash_command, Option
 from discord.ext.pages import Paginator, Page
-from sqlalchemy import asc
+from sqlalchemy import desc
 session = Session()
 
 
@@ -42,7 +42,7 @@ class Memory(commands.Cog):
         pages = []
 
         iter = 0
-        for message, dbmember in messages.order_by(asc(Message.Created)):
+        for message, dbmember in messages.order_by(desc(Message.Created)):
             member = ctx.guild.get_member(dbmember.MemberId)
             iter += 1
             embed = discord.Embed(title=member.name)

@@ -24,17 +24,16 @@ async def list(ctx):
 
 
 async def add(ctx, channel):
-    ch = await commands.TextChannelConverter().convert(ctx, channel)
     channelSql = session.query(IgnoreList)\
         .filter(IgnoreList.ServerId == ctx.guild.id)\
-        .filter(IgnoreList.ChannelId == ch.id).first()
+        .filter(IgnoreList.ChannelId == channel.id).first()
     if not channelSql:
-        newList = IgnoreList(channelId=ch.id, serverId=ctx.guild.id)
+        newList = IgnoreList(channelId=channel.id, serverId=ctx.guild.id)
         session.add(newList)
         session.commit()
-        embed = discord.Embed(title="Канал {} успешно добавлен в список игнора.".format(ch.name))
+        embed = discord.Embed(title="Канал {} успешно добавлен в список игнора.".format(channel.name))
     else:
-        embed = discord.Embed(title="Канал {} уже добавлен в список игнора.".format(ch.name))
+        embed = discord.Embed(title="Канал {} уже добавлен в список игнора.".format(channel.name))
     return embed
 
 

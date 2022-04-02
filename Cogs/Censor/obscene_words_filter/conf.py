@@ -33,7 +33,7 @@ bad_words = [
     build_bad_phrase('д р оа ч'),
     build_bad_phrase('х у е с о с'),
     build_bad_phrase('х у йя'),
-    build_bad_phrase('е б ать'),
+    build_bad_phrase('е б а ть'),
     build_bad_phrase('м а н д а'),
     build_bad_phrase('м у д л оае'),
 ]
@@ -55,6 +55,7 @@ good_words = [
     build_good_phrase('н е б л а г о п р и я т'),
     build_good_phrase('н е б л а г о п р и я т'),
     build_good_phrase('б а з у'),
+    build_good_phrase('н е ф т е б а з'),
     r'([о][с][к][о][Р][б][л][я]([т][ь])*([л])*([е][ш][ь])*)',
     r'([в][л][ю][б][л][я](([т][ь])([с][я])*)*(([е][ш][ь])([с][я])*)*)',
     r'((([п][о][д])*([з][а])*([п][е][р][е])*)*[с][т][р][а][х][у]([й])*([с][я])*([е][ш][ь])*([е][т])*)',

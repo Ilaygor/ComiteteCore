@@ -50,7 +50,8 @@ class Admin(commands.Cog):
 
     @tasks.loop(seconds=60, reconnect=True)
     async def votumTask(self):
-        for i in votumList:
+        keys = votumList.keys()
+        for i in keys:
             votum = votumList[i]
             if datetime.datetime.utcnow() >= votum.EndTime:
                 try:

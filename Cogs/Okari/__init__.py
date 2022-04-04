@@ -23,14 +23,14 @@ class Okari(commands.Cog):
         path = "Temp/{0}.png".format(member.id)
         memberSql = session.query(Member).filter(Member.MemberId == member.id).first()
         if memberSql:
-            SQLWorker.SetAlive(server.Id, member.id)
-            PictureCreator.CreatWelcomeMessage(member.avatar_url_as(size=128),
+            SQLWorker.SetAlive(serverId=server.Id, memberId=member.id)
+            PictureCreator.CreatWelcomeMessage(PictureCreator.GetAvatar(member),
                                                member.name,
                                                server.MemberName) \
                 .save(path, format="png")
         else:
             SQLWorker.AddNewMem(serverId=server.Id, memberId=member.id)
-            PictureCreator.CreateFirstWelcomeMessage(member.avatar_url_as(size=128),
+            PictureCreator.CreateFirstWelcomeMessage(PictureCreator.GetAvatar(member),
                                                      member.name,
                                                      server.MemberName) \
                 .save(path, format="png")
@@ -40,15 +40,14 @@ class Okari(commands.Cog):
         os.remove(path)
 
         if not memberSql:
-            joinRole = server.JoinRole
-            if joinRole:
-                await member.add_roles(member.guild.get_role(int(joinRole)))
+            if server.JoinRole:
+                await member.add_roles(member.guild.get_role(server.JoinRole))
         else:
-            for roleList in session.query(RoleList).filter(RoleList.MemberId == memberSql.Id):
+            for roleList in session.query(RoleList).filter(RoleList.MemberId == memberSql.MemberId):
                 try:
                     await member.add_roles(member.guild.get_role(roleList.RoleId))
                 except AttributeError:
-                    roleList.delete()
+                    session.delete(roleList)
                     session.commit()
                 except discord.errors.Forbidden:
                     pass
@@ -69,7 +68,7 @@ class Okari(commands.Cog):
                     .filter(RoleList.MemberId == member.Id)\
                     .filter(RoleList.RoleId == i.id).first()
                 if not role:
-                    role = RoleList(memberId=member.id, roleId=i.id)
+                    role = RoleList(memberId=member.Id, roleId=i.id)
                     session.add(role)
                     session.commit()
 
@@ -82,7 +81,7 @@ class Okari(commands.Cog):
                     role = session.query(RoleList)\
                         .filter(RoleList.MemberId == member.Id)\
                         .filter(RoleList.RoleId == i.id).first()
-                    role.delete()
+                    session.delete(role)
                     session.commit()
 
     @commands.Cog.listener()
@@ -105,7 +104,7 @@ class Okari(commands.Cog):
                     emojie = session.query(Emojie)\
                         .filter(Emojie.Id == i.id)\
                         .filter(Emojie.ServerId == guild.id).first()
-                    emojie.Delete()
+                    session.delete(emojie)
                     session.commit()
 
     # Пользователь покинул сервер
@@ -114,27 +113,27 @@ class Okari(commands.Cog):
         server = session.query(Server).filter(Server.Id == member.guild.id).first()
         try:
             await member.guild.fetch_ban(member)
-            if not member.bot:
-                XpSys.DelMem(member.id, member.guild.id)
-
         except discord.NotFound:
             path = "Temp/{0}.png".format(member.id)
-            PictureCreator.CreateLostMessage(member.avatar_url_as(size=128),
+            PictureCreator.CreateLostMessage(PictureCreator.GetAvatar(member),
                                              member.name,
                                              member.top_role,
                                              server.MemberName) \
                 .save(path, format="png")
-            SQLWorker.SetDead(server.Id, member.id)
+            SQLWorker.SetDead(serverId=server.Id, memberId=member.id)
             file = discord.File(path, filename="MemRemove.png")
             await member.guild.get_channel(server.InfoChannel).send(file=file)
             os.remove(path)
+
+        if not member.bot:
+            XpSys.DelMem(member.id, member.guild.id)
 
     # Пользователя забанили
     @commands.Cog.listener()
     async def on_member_ban(self, guild, mem):
         server = session.query(Server).filter(Server.Id == mem.guild.id).first()
         path = "Temp/{0}.png".format(mem.id)
-        PictureCreator.CreateLostMessage(mem.avatar_url_as(size=128),
+        PictureCreator.CreateLostMessage(PictureCreator.GetAvatar(mem),
                                          mem.name,
                                          None,
                                          server.MemberName) \

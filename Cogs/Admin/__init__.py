@@ -206,7 +206,7 @@ class Admin(commands.Cog):
             session.commit()
             common.addMembersOnServer(ctx.guild)
         else:
-            common.checkMembersOnServer(ctx.guild)
+            await common.checkMembersOnServer(ctx.guild)
         common.addRoles(ctx.guild)
         common.addEmojies(ctx.guild)
         await ctx.send("Audit completed!")

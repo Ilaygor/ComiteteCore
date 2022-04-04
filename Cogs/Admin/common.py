@@ -4,7 +4,9 @@ from models.Members import Member
 from models.RoleLists import RoleList
 from models.database import Session
 import SQLWorker
+
 session = Session()
+import discord
 
 
 def createServerFolder(guild):
@@ -24,7 +26,7 @@ def addMembersOnServer(guild):
             XpSys.AddMem(member.id, guild.id)
 
 
-def checkMembersOnServer(guild):
+async def checkMembersOnServer(guild):
     memberList = {}
     # Смотрим что в бд и записываем в словарь
     for memberSql in session.query(Member).filter(Member.ServerId == guild.id):
@@ -43,16 +45,26 @@ def checkMembersOnServer(guild):
             SQLWorker.AddNewMem(serverId=guild.id, memberId=discordMember.id)
             memberList.pop(discordMember.id)
 
+        # Возвращаем пользователю роль
+        for roleList in session.query(RoleList).filter(RoleList.MemberId == discordMember.id):
+            try:
+                await discordMember.add_roles(discordMember.guild.get_role(roleList.RoleId))
+            except AttributeError:
+                session.delete(roleList)
+                session.commit()
+            except discord.errors.Forbidden:
+                pass
 
     # Оставшиеся пользователи означает, что они уже покинули Сервер
     for member in memberList.keys():
         if memberList[member]:
             SQLWorker.SetDead(serverId=guild.id, memberId=member)
 
+
 def addEmojies(guild):
     for emoji in guild.emojis:
-        emojieSql = session.query(Emojie)\
-            .filter(Emojie.ServerId == guild.id)\
+        emojieSql = session.query(Emojie) \
+            .filter(Emojie.ServerId == guild.id) \
             .filter(Emojie.Id == emoji.id).first()
         if not emojieSql:
             newEmojie = Emojie(serverId=guild.id, id=emoji.id)
@@ -66,8 +78,8 @@ def addRoles(guild):
             if role.is_default():
                 continue
 
-            roleList = session.query(RoleList)\
-                .filter(RoleList.RoleId == role.id)\
+            roleList = session.query(RoleList) \
+                .filter(RoleList.RoleId == role.id) \
                 .filter(RoleList.MemberId == mem.id).first()
             if not roleList:
                 newRole = RoleList(roleId=role.id, memberId=mem.id)

@@ -11,7 +11,8 @@ class ObsceneWordsFilter(object):
         self.bad_regexp = bad_regexp
         self.good_regexp = good_regexp
 
-    def find_bad_word_matches(self, text):
+    def find_bad_word_matches(self, text : str):
+        text = text.replace('|', '')
         return self.bad_regexp.finditer(text)
 
     def find_bad_word_matches_without_good_words(self, text):

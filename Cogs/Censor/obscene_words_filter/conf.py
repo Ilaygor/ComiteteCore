@@ -46,14 +46,6 @@ bad_words = [
     build_bad_phrase('уy б л ю д оo кk'),
     build_bad_phrase('оаoa н аa н иu сc т'),
     build_bad_phrase('п аa д л ауоеayoe'),
-    build_bad_phrase('f u c k'),
-    build_bad_phrase('s u c k'),
-    build_bad_phrase('b i t c h'),
-    build_bad_phrase('d i c k'),
-    build_bad_phrase('b l ay a t'),
-    build_bad_phrase('s u ck a'),
-    build_bad_phrase('h u i'),
-    build_bad_phrase('e b a'),
 ]
 bad_words_re = re.compile('|'.join(bad_words), re.IGNORECASE | re.UNICODE)
 

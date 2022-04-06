@@ -29,12 +29,12 @@ class ObsceneWordsFilter(object):
 
         return bool(self.bad_regexp.match(word))
 
-    def mask_bad_words(self, text):
+    def mask_bad_words(self, text, symbol='*'):
         for match in self.find_bad_word_matches_without_good_words(text):
             start, end = match.span()
-            text = self.mask_text_range(text, start+1, end)
+            text = self.mask_text_range(text, start+1, end, symbol)
         return text
 
     @staticmethod
-    def mask_text_range(text, start, stop, symbol='#'):
+    def mask_text_range(text, start, stop, symbol='*'):
         return text[:start] + (symbol * (stop - start)) + text[stop:]

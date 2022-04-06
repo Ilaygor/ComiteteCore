@@ -20,7 +20,7 @@ class Censor(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         f = ObsceneWordsFilter(conf.bad_words_re, conf.good_words_re)
-        returning = f.mask_bad_words(message.content)
+        returning = f.mask_bad_words(message.content, symbol='#')
         if returning != message.content:
             print(message.content)
             await message.channel.send(content=message.author.name + ":\n" + returning)

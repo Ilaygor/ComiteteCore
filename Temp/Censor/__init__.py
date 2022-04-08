@@ -5,8 +5,8 @@ from discord.ext import commands
 
 from models.database import Session
 
-from Cogs.Censor.obscene_words_filter import conf
-from Cogs.Censor.obscene_words_filter.words_filter import ObsceneWordsFilter
+from Temp.Censor.obscene_words_filter import conf
+from Temp.Censor.obscene_words_filter.words_filter import ObsceneWordsFilter
 
 
 session = Session()
